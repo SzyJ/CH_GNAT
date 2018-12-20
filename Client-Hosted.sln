@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client-Hosted", "Client-Hosted\Client-Hosted.vcxproj", "{903EDB7C-1C59-40F6-879D-6F7D3BD43F27}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GNAT-Server", "GNAT-Server\GNAT-Server.vcxproj", "{84B6B116-8E9C-4074-85CE-BF16FC06C994}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GNAT-Core", "GNAT-Core\GNAT-Core.vcxproj", "{84B6B116-8E9C-4074-85CE-BF16FC06C994}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
