@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28010.2046
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Client-Hosted", "Client-Hosted\Client-Hosted.vcxproj", "{903EDB7C-1C59-40F6-879D-6F7D3BD43F27}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GNAT-Server", "GNAT-Server\GNAT-Server.vcxproj", "{84B6B116-8E9C-4074-85CE-BF16FC06C994}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{903EDB7C-1C59-40F6-879D-6F7D3BD43F27}.Release|x64.Build.0 = Release|x64
 		{903EDB7C-1C59-40F6-879D-6F7D3BD43F27}.Release|x86.ActiveCfg = Release|Win32
 		{903EDB7C-1C59-40F6-879D-6F7D3BD43F27}.Release|x86.Build.0 = Release|Win32
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Debug|x64.ActiveCfg = Debug|x64
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Debug|x64.Build.0 = Debug|x64
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Debug|x86.ActiveCfg = Debug|Win32
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Debug|x86.Build.0 = Debug|Win32
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Release|x64.ActiveCfg = Release|x64
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Release|x64.Build.0 = Release|x64
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Release|x86.ActiveCfg = Release|Win32
+		{84B6B116-8E9C-4074-85CE-BF16FC06C994}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
