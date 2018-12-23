@@ -19,8 +19,8 @@ namespace GNAT {
 }
 
 // Loging Macros
-#define GNAT_FATAL(...) GNAT::GNAT_Log::getLogger()->fatal(__VA_ARGS__)
-#define GNAT_ERROR(...) GNAT::GNAT_Log::getLogger()->error(__VA_ARGS__)
-#define GNAT_WARN(...) GNAT::GNAT_Log::getLogger()->warn(__VA_ARGS__)
-#define GNAT_INFO(...) GNAT::GNAT_Log::getLogger()->info(__VA_ARGS__)
-#define GNAT_TRACE(...) GNAT::GNAT_Log::getLogger()->trace(__VA_ARGS__)
+#define LOG_FATAL(...) GNAT::GNAT_Log::getLogger()->fatal(__VA_ARGS__)
+#define LOG_ERROR(...) GNAT::GNAT_Log::getLogger()->error(__VA_ARGS__)
+#define LOG_WARN(...) GNAT::GNAT_Log::getLogger()->warn(__VA_ARGS__)
+#define LOG_INFO(...) GNAT::GNAT_Log::getLogger()->info(__VA_ARGS__)
+#define LOG_TRACE(...) GNAT::GNAT_Log::getLogger()->trace(__VA_ARGS__)
