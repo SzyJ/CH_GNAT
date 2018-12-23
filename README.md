@@ -22,5 +22,5 @@ Peer (Normal):
  - [ ] Listen for info about each Peer, update local knowledge
 
 Peer:
- - { } Receive from each client on a different port
- - { } Listen for terminal input and broadcast this value to all other peers
+ - [ ] Receive from each client on a different port
+ - [ ] Listen for terminal input and broadcast this value to all other peers
