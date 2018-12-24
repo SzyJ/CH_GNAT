@@ -1,12 +1,12 @@
 #pragma once
 #include "pch.h"
-#include "ServerErrors.h"
 #include "ClientNode.h"
+#include "ErrorCodes.h"
 
 namespace GNAT {
 	class Server {
 	private:
-		int errorFlag = STARTUP_SUCCESSFUL;
+		Error_Code errorFlag = STARTUP_SUCCESSFUL;
 
 		const static int TARGET_CLIENT_COUNT = 3;
 

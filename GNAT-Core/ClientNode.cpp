@@ -16,7 +16,7 @@ const USHORT ClientNode::getPort() const {
 }
 
 const SOCKADDR_IN ClientNode::getClient() const {
-	return client; 
+	return client;  
 }
 
 const char ClientNode::getUpdateValue() const {

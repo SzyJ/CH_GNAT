@@ -2,7 +2,6 @@
 #include "Server.h"
 #include "IPUtils.h"
 #include "Messages.h"
-#include "ServerErrors.h"
 
 namespace GNAT {
 	Server::Server() {
@@ -27,9 +26,10 @@ namespace GNAT {
 
 		if (bind(serverSocket, (LPSOCKADDR)&sockAddr, sizeof(sockAddr)) == SOCKET_ERROR) {
 			errorFlag = BINDING_SOCKET_FAIL;
-			LOG_ERROR("Failed to buind socket starting server");
+			LOG_ERROR("Failed to bind socket with server");
 			return;
 		}
+		LOG_INFO("Successfully binded server to socket");
 
 		int val = 64 * 1024;
 		setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));

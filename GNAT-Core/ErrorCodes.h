@@ -4,4 +4,4 @@
 #define WINSOCK_STARTUP_FAIL -1
 #define BINDING_SOCKET_FAIL -2
 
-typedef int Server_Error_Code;
+typedef int Error_Code;
