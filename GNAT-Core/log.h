@@ -7,20 +7,35 @@ namespace GNAT {
 	public:
 		static void init();
 
-		inline static std::shared_ptr<spdlog::logger>& getLogger() { return s_logger; }
+		inline static std::shared_ptr<spdlog::logger>& getServerLogger() { return server_logger; }
+		inline static std::shared_ptr<spdlog::logger>& getPeerLogger() { return peer_logger; }
+		inline static std::shared_ptr<spdlog::logger>& getClientLogger() { return client_logger; }
 
 	private:
 		const static int LOG_FILE_SIZE_IN_MB = 5;
 		const static int ROTATING_FILE_COUNT = 3;
 
-
-		static std::shared_ptr<spdlog::logger> s_logger;
+		static std::shared_ptr<spdlog::logger> server_logger;
+		static std::shared_ptr<spdlog::logger> peer_logger;
+		static std::shared_ptr<spdlog::logger> client_logger;
 	};
 }
 
 // Loging Macros
-#define LOG_FATAL(...) GNAT::GNAT_Log::getLogger()->fatal(__VA_ARGS__)
-#define LOG_ERROR(...) GNAT::GNAT_Log::getLogger()->error(__VA_ARGS__)
-#define LOG_WARN(...) GNAT::GNAT_Log::getLogger()->warn(__VA_ARGS__)
-#define LOG_INFO(...) GNAT::GNAT_Log::getLogger()->info(__VA_ARGS__)
-#define LOG_TRACE(...) GNAT::GNAT_Log::getLogger()->trace(__VA_ARGS__)
+#define SERVER_LOG_FATAL(...) GNAT::GNAT_Log::getServerLogger()->fatal(__VA_ARGS__)
+#define SERVER_LOG_ERROR(...) GNAT::GNAT_Log::getServerLogger()->error(__VA_ARGS__)
+#define SERVER_LOG_WARN(...) GNAT::GNAT_Log::getServerLogger()->warn(__VA_ARGS__)
+#define SERVER_LOG_INFO(...) GNAT::GNAT_Log::getServerLogger()->info(__VA_ARGS__)
+#define SERVER_LOG_TRACE(...) GNAT::GNAT_Log::getServerLogger()->trace(__VA_ARGS__)
+
+#define PEER_LOG_FATAL(...) GNAT::GNAT_Log::getPeerLogger()->fatal(__VA_ARGS__)
+#define PEER_LOG_ERROR(...) GNAT::GNAT_Log::getPeerLogger()->error(__VA_ARGS__)
+#define PEER_LOG_WARN(...) GNAT::GNAT_Log::getPeerLogger()->warn(__VA_ARGS__)
+#define PEER_LOG_INFO(...) GNAT::GNAT_Log::getPeerLogger()->info(__VA_ARGS__)
+#define PEER_LOG_TRACE(...) GNAT::GNAT_Log::getPeerLogger()->trace(__VA_ARGS__)
+
+#define CLIENT_LOG_FATAL(...) GNAT::GNAT_Log::getClientLogger()->fatal(__VA_ARGS__)
+#define CLIENT_LOG_ERROR(...) GNAT::GNAT_Log::getClientLogger()->error(__VA_ARGS__)
+#define CLIENT_LOG_WARN(...) GNAT::GNAT_Log::getClientLogger()->warn(__VA_ARGS__)
+#define CLIENT_LOG_INFO(...) GNAT::GNAT_Log::getClientLogger()->info(__VA_ARGS__)
+#define CLIENT_LOG_TRACE(...) GNAT::GNAT_Log::getClientLogger()->trace(__VA_ARGS__)

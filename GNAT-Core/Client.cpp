@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Client.h"
 
 namespace GNAT {
@@ -9,10 +10,10 @@ namespace GNAT {
 		WSADATA wsaData;
 		if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 			errorFlag = WINSOCK_STARTUP_FAIL;
-			LOG_ERROR("Failed to startup Winsock starting client");
+			CLIENT_LOG_ERROR("Failed to startup Winsock starting client");
 			return;
 		}
-		LOG_INFO("WinSock startup success!");
+		CLIENT_LOG_INFO("WinSock startup success");
 
 		// Set connection as UDP
 		clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -30,10 +31,10 @@ namespace GNAT {
 
 		if (bind(clientSocket, (LPSOCKADDR)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
 			errorFlag = BINDING_SOCKET_FAIL;
-			LOG_ERROR("Failed to bind socket with client");
+			CLIENT_LOG_ERROR("Failed to bind socket with client");
 			return;
 		}
-		LOG_INFO("Successfully binded client to socket");
+		CLIENT_LOG_INFO("Successfully binded client to socket");
 
 		int val = 64 * 1024;
 		setsockopt(clientSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
@@ -42,8 +43,20 @@ namespace GNAT {
 	}
 
 	Client::~Client() {
+		CLIENT_LOG_INFO("Closing client connections and cleaning up winsock...");
 		closesocket(clientSocket);
 		WSACleanup();
+		CLIENT_LOG_INFO("Winsock cleanup done. Client connections shutdown");
+	}
+
+
+	bool Client::sendJoinRequest() {
+		// Send Join Message to server, listen for response for client default state
+	}
+
+	int Client::stateUpdateLoop() {
+		// Listen for updates and update state of each client
+		// Listen for keyboard input and send update to server
 	}
 
 	const int Client::getErrorCode() const {

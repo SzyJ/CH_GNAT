@@ -17,6 +17,9 @@ namespace GNAT {
 	public:
 		Client();
 		~Client();
+		
+		bool sendJoinRequest();
+		int stateUpdateLoop();
 
 		const int getErrorCode() const;
 	};

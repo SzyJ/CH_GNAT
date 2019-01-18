@@ -11,11 +11,10 @@ namespace GNAT {
 		int wsaStartupCode = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (wsaStartupCode != 0) {
 			errorFlag = WINSOCK_STARTUP_FAIL;
-			LOG_ERROR("Failed to startup Winsock starting server");
+			SERVER_LOG_ERROR("Failed to startup Winsock starting server");
 			return;
 		}
-		LOG_INFO("WinSock startup success!");
-
+		SERVER_LOG_INFO("Winsock startup success");
 
 		SOCKADDR_IN sockAddr;
 		sockAddr.sin_port = htons(PORT);
@@ -26,28 +25,31 @@ namespace GNAT {
 
 		if (bind(serverSocket, (LPSOCKADDR)&sockAddr, sizeof(sockAddr)) == SOCKET_ERROR) {
 			errorFlag = BINDING_SOCKET_FAIL;
-			LOG_ERROR("Failed to bind socket with server");
+			SERVER_LOG_ERROR("Failed to bind socket with server");
 			return;
 		}
-		LOG_INFO("Successfully binded server to socket");
+		SERVER_LOG_INFO("Successfully binded server to socket on port: " + std::to_string(PORT));
 
 		int val = 64 * 1024;
 		setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
 		setsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&val, sizeof(val));
 
 		listen(serverSocket, 1000);
+		SERVER_LOG_INFO("Server listen start");
 	}
 
 	Server::~Server() {
+		SERVER_LOG_INFO("Closing server and cleaning up winsock...");
 		closesocket(serverSocket);
 		WSACleanup();
+		SERVER_LOG_INFO("Winsock cleanup done. Server shutdown");
 	}
 
 	int Server::sendMessage(SOCKADDR_IN receiver, std::string msg) {
-		return sendto(serverSocket, msg.c_str(), msg.length(), 0, (sockaddr*)&receiver, sizeof(receiver));
+		return sendMessage(receiver, msg.c_str(), msg.length());
 	}
 
-	int Server::sendMessage(SOCKADDR_IN receiver, char* msg, int msgLength) {
+	int Server::sendMessage(SOCKADDR_IN receiver, const char* msg, int msgLength) {
 		return sendto(serverSocket, msg, msgLength, 0, (sockaddr*)&receiver, sizeof(receiver));
 	}
 
@@ -60,7 +62,7 @@ namespace GNAT {
 
 		clientIPList.reserve(TARGET_CLIENT_COUNT);
 
-		LOG_INFO("Searching for " + std::to_string(TARGET_CLIENT_COUNT) + " clients: ");
+		SERVER_LOG_INFO("Searching for " + std::to_string(TARGET_CLIENT_COUNT) + " clients: ");
 		while (currentClientCount < TARGET_CLIENT_COUNT) {
 			SOCKADDR_IN clientAddr;
 			int clientSize = sizeof(clientAddr);
@@ -77,7 +79,7 @@ namespace GNAT {
 					if (receivedMsg == Messages::JOIN) {
 						clientIPList.emplace_back(clientAddr);
 						sendMessage(clientAddr, std::to_string(ClientNode::getLastNodeID()));
-						LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
+						SERVER_LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
 						++currentClientCount;
 					}
 				}
@@ -88,6 +90,8 @@ namespace GNAT {
 
 			Sleep(1);
 		}
+
+		// TODD: Broadcast Initial state and details to clients
 	}
 
 	void Server::broadcastState() {

@@ -24,14 +24,14 @@ namespace GNAT {
 
 		void clearMessageBuffer();
 		int sendMessage(SOCKADDR_IN receiver, std::string msg);
-		int sendMessage(SOCKADDR_IN receiver, char* msg, int msgLength);
+		int sendMessage(SOCKADDR_IN receiver, const char* msg, int msgLength);
 
 	public:
 		Server();
 		~Server();
 
 		/* 
-		 * Opens a port to listen for sygnals on. When a "join"
+		 * Opens a port to listen for signals on. When a "join"
 		 * message is received, add the sender of the message to
 		 * the list of clients.
 		 */

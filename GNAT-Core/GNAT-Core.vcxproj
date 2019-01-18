@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientNode.cpp" />
     <ClCompile Include="IPUtils.cpp" />
     <ClCompile Include="log.cpp" />
@@ -32,13 +33,14 @@
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Client.h" />
     <ClInclude Include="ClientNode.h" />
+    <ClInclude Include="ErrorCodes.h" />
     <ClInclude Include="IPUtils.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Server.h" />
-    <ClInclude Include="ServerErrors.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
