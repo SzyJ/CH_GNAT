@@ -52,11 +52,15 @@ namespace GNAT {
 
 	bool Client::sendJoinRequest() {
 		// Send Join Message to server, listen for response for client default state
+
+		return false;
 	}
 
 	int Client::stateUpdateLoop() {
 		// Listen for updates and update state of each client
 		// Listen for keyboard input and send update to server
+
+		return -1;
 	}
 
 	const int Client::getErrorCode() const {
