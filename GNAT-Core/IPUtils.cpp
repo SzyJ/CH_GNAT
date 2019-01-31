@@ -16,3 +16,11 @@ void IP_Utils::expandAddress(SOCKADDR_IN addr, std::string* ipAddress, USHORT* p
 	*ipAddress = std::string(addrBuffer, realLen);
 	*port = ntohs(addr.sin_port);
 }
+
+int IP_Utils::sendMessage(SOCKET socket, SOCKADDR_IN receiver, std::string msg) {
+	return sendMessage(socket, receiver, msg.c_str(), msg.length());
+}
+
+int IP_Utils::sendMessage(SOCKET socket, SOCKADDR_IN receiver, const char* msg, int msgLength) {
+	return sendto(socket, msg, msgLength, 0, (sockaddr*)&receiver, sizeof(receiver));
+}

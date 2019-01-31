@@ -45,14 +45,6 @@ namespace GNAT {
 		SERVER_LOG_INFO("Winsock cleanup done. Server shutdown");
 	}
 
-	int Server::sendMessage(SOCKADDR_IN receiver, std::string msg) {
-		return sendMessage(receiver, msg.c_str(), msg.length());
-	}
-
-	int Server::sendMessage(SOCKADDR_IN receiver, const char* msg, int msgLength) {
-		return sendto(serverSocket, msg, msgLength, 0, (sockaddr*)&receiver, sizeof(receiver));
-	}
-
 	void Server::clearMessageBuffer() {
 		ZeroMemory(messageBuffer, MESSAGE_BUFFER_SIZE);
 	}
@@ -76,9 +68,9 @@ namespace GNAT {
 					// Capture Message
 					std::string receivedMsg = std::string(messageBuffer, messageBuffer + bytesReceived);
 
-					if (receivedMsg == Messages::JOIN) {
+					if (receivedMsg == Messages::JOIN_REQ) {
 						clientIPList.emplace_back(clientAddr);
-						sendMessage(clientAddr, std::to_string(ClientNode::getLastNodeID()));
+						IP_Utils::sendMessage(serverSocket, clientAddr, Messages::JOIN_ACC + std::to_string(ClientNode::getLastNodeID()));
 						SERVER_LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
 						++currentClientCount;
 					}
@@ -112,7 +104,7 @@ namespace GNAT {
 
 			// Broadcast Message
 			for (int i = 0; i < clientIPList.size(); ++i) {
-				sendMessage(clientIPList.at(i).getClient(), update, MSG_LENGTH);
+				IP_Utils::sendMessage(serverSocket, clientIPList.at(i).getClient(), update, MSG_LENGTH);
 			}
 
 			Sleep(SEND_DELAY);
@@ -139,7 +131,7 @@ namespace GNAT {
 					IP_Utils::expandAddress(clientAddr, &addr, &port);
 
 					// Send Message
-					sendMessage(clientAddr, "");
+					IP_Utils::sendMessage(serverSocket, clientAddr, "");
 				}
 				catch (std::invalid_argument& e) {}
 				catch (std::out_of_range& e) {}

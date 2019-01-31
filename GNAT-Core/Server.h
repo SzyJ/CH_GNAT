@@ -23,8 +23,7 @@ namespace GNAT {
 		bool serverRunning;
 
 		void clearMessageBuffer();
-		int sendMessage(SOCKADDR_IN receiver, std::string msg);
-		int sendMessage(SOCKADDR_IN receiver, const char* msg, int msgLength);
+
 
 	public:
 		Server();
