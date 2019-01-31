@@ -8,7 +8,7 @@ Server:
  - [X] Start Loop that brodcasts state every X Miliseconds
 
 Client:
- - [ ] Send Join Message to server
+ - [X] Send Join Message to server
  - [ ] Respond to Ping request
  - [ ] Receive real state from server and update local values 
  - [ ] Listen for input from terminal. Send this update to Server
