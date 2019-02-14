@@ -62,11 +62,10 @@ namespace GNAT {
     }
 
     bool Client::sendJoinRequest() {
-        // Send Join Message to server, listen for response for client default state
         int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, Messages::JOIN_REQ);
-        if (bytesSent != bytesSent) {
+        if (bytesSent != Messages::LENGTH) {
             CLIENT_LOG_ERROR("Failed to send join request");
-            return SOCKET_ERROR != bytesSent;
+            return false;
         }
 
         bool awaitingJoinAccept = true;
@@ -103,14 +102,56 @@ namespace GNAT {
         return false;
     }
 
-    int Client::stateUpdateLoop() {
-        // Listen for updates and update state of each client
-        // Listen for keyboard input and send update to server
+	char Client::checkForUserInput() inline {
+
+		for (int i = 0; i < 10; ++i) {
+			if (GetAsyncKeyState(0x30 + i)) {
+				return '0' + i;
+			}
+		}
+
+		return NULL;
+	}
+
+	bool Client::userInputLoop() {
+		// Listen for keyboard input and send update to server
+
+		while (true) {
+
+		}
 
 
+		return false;
+	}
 
-        return -1;
+    bool Client::stateUpdateLoop() {
+		const int serverUpdateBufferLength = 1024;
+		char serverUpdateBuffer[serverUpdateBufferLength];
+
+		while (true) {
+			SOCKADDR_IN serverAddr;
+			int	serverAddrLen = sizeof(serverAddr);
+
+			ZeroMemory(serverUpdateBuffer, serverUpdateBufferLength);
+
+			int iResult = recvfrom(clientSocket, serverUpdateBuffer, serverUpdateBufferLength, 0, (sockaddr*)&serverAddr, &serverAddrLen);
+
+			if (iResult > 0) {
+				// Update Received
+			} else {
+				// connection failed. Exit?
+			}
+		}
+
+        return false;
     }
+
+	bool Client::startListen() {
+		sendUpdates = std::thread(userInputLoop());
+		recvUpdates = std::thread(stateUpdateLoop());
+
+		return false;
+	}
 
     const int Client::getErrorCode() const {
         return errorFlag;

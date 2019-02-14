@@ -18,17 +18,24 @@ namespace GNAT {
 
 		SOCKET clientSocket;
 
+		std::thread sendUpdates;
+		std::thread recvUpdates;
+
 		char thisVal;
 
 		bool compareMessageCode(const std::string& message, const std::string& expectedMessage);
 
+		char checkForUserInput() inline;
+
+		bool userInputLoop();
+		bool stateUpdateLoop();
 
 	public:
 		Client();
 		~Client();
 		
 		bool sendJoinRequest();
-		int stateUpdateLoop();
+		bool startListen();
 
 		const int getErrorCode() const;
 	};
