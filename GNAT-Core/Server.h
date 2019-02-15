@@ -8,7 +8,7 @@ namespace GNAT {
 	private:
 		Error_Code errorFlag = STARTUP_SUCCESSFUL;
 
-		const static int TARGET_CLIENT_COUNT = 3;
+		const static int TARGET_CLIENT_COUNT = 4;
 
 		const static int PORT = 54000;
 		const static int MESSAGE_BUFFER_SIZE = 1024;

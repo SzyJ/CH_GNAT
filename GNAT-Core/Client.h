@@ -1,12 +1,16 @@
 #pragma once
 #include "pch.h"
 #include "ErrorCodes.h"
+
 namespace GNAT {
 	class Client {
 	private:
 		Error_Code errorFlag = STARTUP_SUCCESSFUL;
 
 		const static int PLAYER_COUNT = 4;
+
+		// map of: ID, Value 
+		std::map<int, char> playerStates;
 
 		const static std::string SERVER_ADDRESS;
 		
@@ -21,7 +25,7 @@ namespace GNAT {
 		std::thread sendUpdates;
 		std::thread recvUpdates;
 
-		char thisVal;
+		char thisID;
 
 		bool compareMessageCode(const std::string& message, const std::string& expectedMessage);
 
