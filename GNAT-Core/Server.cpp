@@ -84,6 +84,9 @@ namespace GNAT {
 		}
 
 		// TODD: Broadcast Initial state and details to clients
+
+		// Loop through each client node IDs
+		// send a value to each one. can be the same eg 0
 	}
 
 	void Server::broadcastState() {

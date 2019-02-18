@@ -25,7 +25,13 @@ namespace GNAT {
 		std::thread sendUpdates;
 		std::thread recvUpdates;
 
-		char thisID;
+		unsigned int thisID;
+		char const* thisVal;
+
+		bool threadsListening = false;
+
+		bool sendToServer(std::string message, const char* onErrorMsg = nullptr);
+		std::string listenForServerMessage(int minimumByteLength = 0);
 
 		bool compareMessageCode(const std::string& message, const std::string& expectedMessage);
 
@@ -40,6 +46,7 @@ namespace GNAT {
 		
 		bool sendJoinRequest();
 		bool startListen();
+		bool stopListen();
 
 		const int getErrorCode() const;
 	};

@@ -61,13 +61,61 @@ namespace GNAT {
         return true;
     }
 
+	bool Client::sendToServer(std::string message, const char* onErrorMsg = nullptr) {
+		int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, message);
+		if (bytesSent != message.length) {
+			if (onErrorMsg != nullptr) {
+				CLIENT_LOG_ERROR(onErrorMsg);
+			} else {
+				CLIENT_LOG_ERROR("Failed to send message to server: " + message);
+			}
+			return false;
+		}
+
+		return true;
+	}
+
+	std::string Client::listenForServerMessage(const int minimumByteLength = 1) {
+		bool awaitingJoinAccept = true;
+
+		CLIENT_LOG_INFO("Waiting for Server Response...");
+
+		while (awaitingJoinAccept) {
+			SOCKADDR_IN serverAddr;
+			int serverSize = sizeof(serverAddr);
+
+			int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
+
+			if (bytesReceived >= minimumByteLength) {
+
+				try {
+					return std::string(messageBuffer, messageBuffer + bytesReceived);
+				} catch (...) {
+					CLIENT_LOG_ERROR("An exception occurred when reading server response");
+					return NULL;
+				}
+
+			} else if (bytesReceived > 0) {
+				CLIENT_LOG_WARN("Received message from server below threashold, IGNORING");
+			}
+
+			Sleep(1);
+		}
+
+		return NULL;
+	}
+
     bool Client::sendJoinRequest() {
-        int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, Messages::JOIN_REQ);
-        if (bytesSent != Messages::LENGTH) {
-            CLIENT_LOG_ERROR("Failed to send join request");
+        bool sendSuccessful = sendToServer(Messages::JOIN_REQ, "Failed to send join request");
+        if (!sendSuccessful) {
             return false;
         }
 
+
+		std::string serverMsg = listenForServerMessage(Messages::LENGTH + PLAYER_COUNT);
+
+
+		// TODO: convert this to use helper method.
         bool awaitingJoinAccept = true;
         while (awaitingJoinAccept) {
 			SOCKADDR_IN serverAddr;
@@ -83,8 +131,10 @@ namespace GNAT {
                     if (compareMessageCode(receivedMsg, Messages::JOIN_ACC)) {
 						awaitingJoinAccept = false;
 						if (receivedMsg.length() > Messages::LENGTH) {
-							thisVal = receivedMsg[Messages::LENGTH];
-							CLIENT_LOG_INFO("Client initialized to: " + thisVal);
+							// Get ID from server
+							thisID = receivedMsg[Messages::LENGTH];
+
+							CLIENT_LOG_INFO("Client ID set to: " + std::to_string(thisID));
 							return true;
 						} else {
 							CLIENT_LOG_ERROR("Failed to get initial Value from Server. Aborting connection.");
@@ -97,7 +147,13 @@ namespace GNAT {
                 catch (std::out_of_range& e) { awaitingJoinAccept = false; }
                 catch (...) { awaitingJoinAccept = false; }
             }
+
+			Sleep(1);
         }
+
+		// TODO: Get initial Value from server
+		thisVal = &playerStates.at(thisID);
+		// End Get init values
 
         return false;
     }
@@ -116,8 +172,18 @@ namespace GNAT {
 	bool Client::userInputLoop() {
 		// Listen for keyboard input and send update to server
 
-		while (true) {
+		char validKeycodeUpdate = NULL;
 
+		while (true) {
+			validKeycodeUpdate = checkForUserInput();
+
+			if (validKeycodeUpdate == NULL ||
+				validKeycodeUpdate == *thisVal) {
+				Sleep(1);
+				continue;
+			}
+
+			// Send Update to server
 		}
 
 
@@ -147,10 +213,29 @@ namespace GNAT {
     }
 
 	bool Client::startListen() {
+		if (threadsListening) {
+			// Log info
+			return false;
+		}
+		threadsListening = true;
+
 		sendUpdates = std::thread(userInputLoop());
 		recvUpdates = std::thread(stateUpdateLoop());
 
 		return false;
+	}
+
+	bool Client::stopListen() {
+		if (!threadsListening) {
+			// Log info
+			return false;
+		}
+
+		threadsListening = false;
+
+		// Stop Threads somehow
+
+		return true;
 	}
 
     const int Client::getErrorCode() const {
