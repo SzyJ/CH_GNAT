@@ -31,7 +31,7 @@ namespace GNAT {
 		bool threadsListening = false;
 
 		bool sendToServer(std::string message, const char* onErrorMsg = nullptr);
-		std::string listenForServerMessage(int minimumByteLength = 0);
+		std::string listenForServerMessage(const int rejectByteLength, const std::string expectedMsgCode, const int maxRetryCount);
 
 		bool compareMessageCode(const std::string& message, const std::string& expectedMessage);
 

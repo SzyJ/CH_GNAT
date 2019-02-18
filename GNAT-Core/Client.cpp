@@ -75,21 +75,34 @@ namespace GNAT {
 		return true;
 	}
 
-	std::string Client::listenForServerMessage(const int minimumByteLength = 1) {
-		bool awaitingJoinAccept = true;
+	std::string Client::listenForServerMessage(const int rejectByteLength = 0, const std::string expectedMsgCode = "", const int maxRetryCount = 1500) {
+		int retryCount = 0;
 
 		CLIENT_LOG_INFO("Waiting for Server Response...");
 
-		while (awaitingJoinAccept) {
+		std::string msg = "";
+
+		// TODO: dont convert to string but let data be sent as bits in chars
+
+		while (retryCount++ < maxRetryCount || maxRetryCount < 0) {
 			SOCKADDR_IN serverAddr;
 			int serverSize = sizeof(serverAddr);
 
 			int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
 
-			if (bytesReceived >= minimumByteLength) {
+			if (bytesReceived > rejectByteLength) {
 
 				try {
-					return std::string(messageBuffer, messageBuffer + bytesReceived);
+					msg = std::string(messageBuffer, messageBuffer + bytesReceived);
+
+					if (expectedMsgCode == "") {
+						return msg;
+					} else if (compareMessageCode(msg, expectedMsgCode)) {
+						return msg.substr(Messages::LENGTH);
+					} else {
+						CLIENT_LOG_WARN("Received message from server with unexpected message code, IGNORING");
+					}
+
 				} catch (...) {
 					CLIENT_LOG_ERROR("An exception occurred when reading server response");
 					return NULL;
@@ -102,6 +115,8 @@ namespace GNAT {
 			Sleep(1);
 		}
 
+		CLIENT_LOG_WARN("Failed to get response from server. Timed out.");
+
 		return NULL;
 	}
 
@@ -112,7 +127,15 @@ namespace GNAT {
         }
 
 
-		std::string serverMsg = listenForServerMessage(Messages::LENGTH + PLAYER_COUNT);
+		std::string serverMsg = listenForServerMessage(Messages::LENGTH, Messages::JOIN_ACC);
+		// server response is rejected unless it is longer than Messages::LENGTH
+		if (serverMsg == "" && std::isdigit(serverMsg[0])) {
+			CLIENT_LOG_ERROR("Failed to receive join ack from server. Aborting connection");
+			return false;
+		}
+
+		thisID = serverMsg[0];
+
 
 
 		// TODO: convert this to use helper method.
