@@ -4,11 +4,11 @@
 
 class ClientNode {
 private:
-	static unsigned int lastNodeID;
+	static byte lastNodeID;
 
 	char updateValue = '0';
 
-	unsigned int nodeID;
+	byte nodeID;
 	USHORT port;
 	std::string address;
 	SOCKADDR_IN client;
@@ -19,7 +19,7 @@ public:
 		IP_Utils::expandAddress(clientObj, &address, &port);
 	};
 
-	static const unsigned int getLastNodeID();
+	static const byte getLastNodeID();
 
 	const std::string to_string() const;
 
@@ -28,5 +28,7 @@ public:
 
 	const char getUpdateValue() const;
 	void setUpdateValue(const char& newValue);
+
+	const byte getNodeID() const;
 };
 

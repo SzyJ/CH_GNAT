@@ -1,9 +1,9 @@
 #include "pch.h"
 #include "ClientNode.h"
 
-unsigned int ClientNode::lastNodeID = 0;
+byte ClientNode::lastNodeID = 0;
 
-const unsigned int ClientNode::getLastNodeID() {
+const byte ClientNode::getLastNodeID() {
 	return lastNodeID;
 }
 
@@ -25,4 +25,8 @@ const char ClientNode::getUpdateValue() const {
 
 void ClientNode::setUpdateValue(const char& newValue) {
 	updateValue = newValue;
+}
+
+const byte ClientNode::getNodeID() const {
+	return nodeID;
 }

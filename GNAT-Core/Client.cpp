@@ -51,137 +51,102 @@ namespace GNAT {
         CLIENT_LOG_INFO("Winsock cleanup done. Client connections shutdown");
     }
 
-    bool Client::compareMessageCode(const std::string& message, const std::string& expectedMessage) {
-        for (int i = 0; i < Messages::LENGTH; ++i) {
-            if (message[i] != expectedMessage[i]) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-	bool Client::sendToServer(std::string message, const char* onErrorMsg = nullptr) {
-		int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, message);
-		if (bytesSent != message.length) {
+	bool Client::sendToServer(const char* message, const int messageLen, const char* onErrorMsg) {
+		int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, message, messageLen);
+		if (bytesSent != messageLen) {
 			if (onErrorMsg != nullptr) {
 				CLIENT_LOG_ERROR(onErrorMsg);
 			} else {
-				CLIENT_LOG_ERROR("Failed to send message to server: " + message);
+				CLIENT_LOG_ERROR("Failed to send message to server: " + std::string(message, messageLen));
 			}
 			return false;
 		}
 
+		CLIENT_LOG_INFO("Message sent to server: " + std::string(message, messageLen));
+
 		return true;
 	}
 
-	std::string Client::listenForServerMessage(const int rejectByteLength = 0, const std::string expectedMsgCode = "", const int maxRetryCount = 1500) {
+	int Client::listenForServerMessage(const int maxRetryCount = 1500) {
 		int retryCount = 0;
 
 		CLIENT_LOG_INFO("Waiting for Server Response...");
-
-		std::string msg = "";
-
-		// TODO: dont convert to string but let data be sent as bits in chars
 
 		while (retryCount++ < maxRetryCount || maxRetryCount < 0) {
 			SOCKADDR_IN serverAddr;
 			int serverSize = sizeof(serverAddr);
 
-			int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
+			try {
+				int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
 
-			if (bytesReceived > rejectByteLength) {
-
-				try {
-					msg = std::string(messageBuffer, messageBuffer + bytesReceived);
-
-					if (expectedMsgCode == "") {
-						return msg;
-					} else if (compareMessageCode(msg, expectedMsgCode)) {
-						return msg.substr(Messages::LENGTH);
-					} else {
-						CLIENT_LOG_WARN("Received message from server with unexpected message code, IGNORING");
-					}
-
-				} catch (...) {
-					CLIENT_LOG_ERROR("An exception occurred when reading server response");
-					return NULL;
-				}
-
-			} else if (bytesReceived > 0) {
-				CLIENT_LOG_WARN("Received message from server below threashold, IGNORING");
+				return bytesReceived;
+			} catch (...) {
+				CLIENT_LOG_ERROR("An exception occurred when reading server response");
+				return EXEPTION_DURING_MSG_RECEIVE;
 			}
 
 			Sleep(1);
 		}
 
-		CLIENT_LOG_WARN("Failed to get response from server. Timed out.");
-
-		return NULL;
+		return NO_MESSAGE_TO_RECEIVE;
 	}
 
     bool Client::sendJoinRequest() {
-        bool sendSuccessful = sendToServer(Messages::JOIN_REQ, "Failed to send join request");
+        bool sendSuccessful = sendToServer(Messages::JOIN_REQ, MESSAGE_LENGTH, "Failed to send join request");
         if (!sendSuccessful) {
             return false;
         }
 
 
-		std::string serverMsg = listenForServerMessage(Messages::LENGTH, Messages::JOIN_ACC);
-		// server response is rejected unless it is longer than Messages::LENGTH
-		if (serverMsg == "" && std::isdigit(serverMsg[0])) {
-			CLIENT_LOG_ERROR("Failed to receive join ack from server. Aborting connection");
+		int serverMsgLength = listenForServerMessage();
+
+		if (!Messages::codesMatch(messageBuffer, serverMsgLength, Messages::JOIN_ACC)) {
+			CLIENT_LOG_ERROR("Failed to receive join ack from server. Aborting connection. Server Msg: " + std::string(messageBuffer, serverMsgLength));
+			return false;
+		} else if (serverMsgLength == MESSAGE_LENGTH) {
+			CLIENT_LOG_ERROR("Server join Acknowlegement did not contain this client's ID. Aborting connection. Server Msg: " + std::string(messageBuffer, serverMsgLength));
 			return false;
 		}
 
-		thisID = serverMsg[0];
+		// Assuming that protocol only alows 1 byte for ID
+		thisID = messageBuffer[MESSAGE_LENGTH];
 
-
-
-		// TODO: convert this to use helper method.
         bool awaitingJoinAccept = true;
         while (awaitingJoinAccept) {
 			SOCKADDR_IN serverAddr;
 			int serverSize = sizeof(serverAddr);
 
-            int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
+			int bytesReceived = 0;
+			try {
+				bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
+			} catch (...) {
+				CLIENT_LOG_ERROR("Exception occurred when receiving data from server. Error code: " + std::to_string(WSAGetLastError()));
+				continue;
+			}
 
-            if (bytesReceived >= Messages::LENGTH + PLAYER_COUNT) {
-                try {
-                    // Capture Message
-                    std::string receivedMsg = std::string(messageBuffer, messageBuffer + bytesReceived);
+			if (Messages::codesMatch(messageBuffer, bytesReceived, Messages::JOIN_ACC)) {
+				if (bytesReceived < MESSAGE_LENGTH + 1) {
+					CLIENT_LOG_ERROR("Failed to get initial Value from Server. Aborting connection.");
+					return false;
+				}
+				awaitingJoinAccept = false;
 
-                    if (compareMessageCode(receivedMsg, Messages::JOIN_ACC)) {
-						awaitingJoinAccept = false;
-						if (receivedMsg.length() > Messages::LENGTH) {
-							// Get ID from server
-							thisID = receivedMsg[Messages::LENGTH];
+				Messages::dataByte data(messageBuffer[MESSAGE_LENGTH]);
+				thisID = data.unsignedByte;
 
-							CLIENT_LOG_INFO("Client ID set to: " + std::to_string(thisID));
-							return true;
-						} else {
-							CLIENT_LOG_ERROR("Failed to get initial Value from Server. Aborting connection.");
-							return false;
-						}
-						
-                    }
-                }
-				catch (std::invalid_argument& e) { awaitingJoinAccept = false; }
-                catch (std::out_of_range& e) { awaitingJoinAccept = false; }
-                catch (...) { awaitingJoinAccept = false; }
-            }
+				CLIENT_LOG_INFO("Client ID set to: " + std::to_string(thisID));
+				return true;
+			}
 
 			Sleep(1);
         }
 
 		// TODO: Get initial Value from server
-		thisVal = &playerStates.at(thisID);
-		// End Get init values
 
         return false;
     }
 
-	char Client::checkForUserInput() inline {
+	char Client::checkForUserInput() {
 
 		for (int i = 0; i < 10; ++i) {
 			if (GetAsyncKeyState(0x30 + i)) {
@@ -242,8 +207,8 @@ namespace GNAT {
 		}
 		threadsListening = true;
 
-		sendUpdates = std::thread(userInputLoop());
-		recvUpdates = std::thread(stateUpdateLoop());
+		//sendUpdates = std::thread(userInputLoop());
+		//recvUpdates = std::thread(stateUpdateLoop());
 
 		return false;
 	}

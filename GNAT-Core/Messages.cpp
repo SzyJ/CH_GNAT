@@ -1,11 +1,24 @@
 #include "pch.h"
 #include "Messages.h"
 
-const int Messages::LENGTH = 2;
+const char* Messages::JOIN_REQ = "JR";
+const char* Messages::JOIN_ACC = "JA";
+const char* Messages::PING_REQ = "PQ";
+const char* Messages::PING_RESP = "PS";
+const char* Messages::UPDATE = "UP";
+const char* Messages::DEFINE = "DF";
+const char* Messages::CURRENT_STATE = "CS";
 
-const std::string Messages::JOIN_REQ = "JR";
-const std::string Messages::JOIN_ACC = "JA";
-const std::string Messages::PING_REQ = "PQ";
-const std::string Messages::PING_RESP = "PS";
-const std::string Messages::UPDATE = "UP";
-const std::string Messages::DEFINE = "DF";
+bool Messages::codesMatch(const char* message, const int messageLen, const char* code) {
+	if (messageLen < MESSAGE_LENGTH) {
+		return false;
+	}
+
+	for (int charIndex = 0; charIndex < MESSAGE_LENGTH; ++charIndex) {
+		if (message[charIndex] != code[charIndex]) {
+			return false;
+		}
+	}
+
+	return true;
+}

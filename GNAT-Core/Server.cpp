@@ -63,21 +63,36 @@ namespace GNAT {
 
 			int bytesReceived = recvfrom(serverSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&clientAddr, &clientSize);
 
-			if (bytesReceived > 0) {
-				try {
-					// Capture Message
-					std::string receivedMsg = std::string(messageBuffer, messageBuffer + bytesReceived);
+			if (Messages::codesMatch(messageBuffer, bytesReceived, Messages::JOIN_REQ)) {
+				clientIPList.emplace_back(clientAddr);
 
-					if (receivedMsg == Messages::JOIN_REQ) {
-						clientIPList.emplace_back(clientAddr);
-						IP_Utils::sendMessage(serverSocket, clientAddr, Messages::JOIN_ACC + std::to_string(ClientNode::getLastNodeID()));
-						SERVER_LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
-						++currentClientCount;
-					}
+				Messages::dataByte thisClientsID(ClientNode::getLastNodeID());
+
+				const int messageLen = MESSAGE_LENGTH + 1; // Join_Ack + ID
+				char message[messageLen];
+
+				strcpy_s(message, MESSAGE_LENGTH, Messages::JOIN_ACC);
+				message[MESSAGE_LENGTH] = thisClientsID.signedByte;
+
+				int bytesSent = 0;
+
+				try {
+					bytesSent = IP_Utils::sendMessage(serverSocket, clientAddr, message, messageLen);
+				} catch (...) {
+					SERVER_LOG_ERROR("Exception occurred when sending Join_Ack.");
 				}
-				catch (std::invalid_argument& e) {}
-				catch (std::out_of_range& e) {}
-				catch (...) {}
+
+				if (bytesSent <= 0) {
+					SERVER_LOG_ERROR("Failed to send Join_Ack. Error code: " + std::to_string(WSAGetLastError()));
+
+					// TODO: Remove player from clientIPList
+
+					//continue;
+				}
+
+
+				SERVER_LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
+				++currentClientCount;
 			}
 
 			Sleep(1);
@@ -90,24 +105,27 @@ namespace GNAT {
 	}
 
 	void Server::broadcastState() {
-		const char* MESSAGE_TYPE = Messages::UPDATE.c_str();
-		const int TYPE_LENGTH = 2;
-		const int MSG_LENGTH = TYPE_LENGTH + TARGET_CLIENT_COUNT;
-
-		char update[MSG_LENGTH];
-		for (int i = 0; i < TYPE_LENGTH; ++i) {
-			update[i] = MESSAGE_TYPE[i];
-		}
+		const int MSG_LENGTH = MESSAGE_LENGTH + (TARGET_CLIENT_COUNT * 2);
+		char updateMsg[MSG_LENGTH];
 
 		while (true) {
-			// Build Update Message	
-			for (int i = 0; i < TARGET_CLIENT_COUNT; ++i) {
-				update[TYPE_LENGTH + i] = clientIPList.at(i).getUpdateValue();
+			strcpy_s(updateMsg, MESSAGE_LENGTH, Messages::CURRENT_STATE);
+
+			int clinetStepper = 0;
+			for (int i = MESSAGE_LENGTH; clinetStepper < TARGET_CLIENT_COUNT; i += 2, ++clinetStepper) {
+				ClientNode* thisClient = &clientIPList.at(clinetStepper);
+
+				Messages::dataByte thisID(thisClient->getNodeID());
+				const char thisVal = thisClient->getUpdateValue();
+
+				updateMsg[i] = thisID.signedByte;
+				updateMsg[i + 1] = thisVal;
 			}
 
+
 			// Broadcast Message
-			for (int i = 0; i < clientIPList.size(); ++i) {
-				IP_Utils::sendMessage(serverSocket, clientIPList.at(i).getClient(), update, MSG_LENGTH);
+			for (int i = 0; i < TARGET_CLIENT_COUNT; ++i) {
+				IP_Utils::sendMessage(serverSocket, clientIPList.at(i).getClient(), updateMsg, MSG_LENGTH);
 			}
 
 			Sleep(SEND_DELAY);
@@ -125,20 +143,10 @@ namespace GNAT {
 
 			if (bytesReceived > 0) {
 				try {
-					// Capture Message
-					std::string receivedMsg = std::string(messageBuffer, messageBuffer + bytesReceived);
-
-					// Define the address and port
-					std::string addr(IP_Utils::IP_STRING_LENGTH, ' ');
-					USHORT port;
-					IP_Utils::expandAddress(clientAddr, &addr, &port);
-
-					// Send Message
-					IP_Utils::sendMessage(serverSocket, clientAddr, "");
+					// TODO
+				} catch (...) {
+				
 				}
-				catch (std::invalid_argument& e) {}
-				catch (std::out_of_range& e) {}
-				catch (...) {}
 			}
 
 			Sleep(1);

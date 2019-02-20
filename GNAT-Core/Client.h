@@ -10,7 +10,7 @@ namespace GNAT {
 		const static int PLAYER_COUNT = 4;
 
 		// map of: ID, Value 
-		std::map<int, char> playerStates;
+		std::map<byte, char> playerStates;
 
 		const static std::string SERVER_ADDRESS;
 		
@@ -25,17 +25,15 @@ namespace GNAT {
 		std::thread sendUpdates;
 		std::thread recvUpdates;
 
-		unsigned int thisID;
+		byte thisID;
 		char const* thisVal;
 
 		bool threadsListening = false;
 
-		bool sendToServer(std::string message, const char* onErrorMsg = nullptr);
-		std::string listenForServerMessage(const int rejectByteLength, const std::string expectedMsgCode, const int maxRetryCount);
+		bool sendToServer(const char* message, const int messageLen, const char* onErrorMsg = nullptr);
+		int listenForServerMessage(const int maxRetryCount);
 
-		bool compareMessageCode(const std::string& message, const std::string& expectedMessage);
-
-		char checkForUserInput() inline;
+		char checkForUserInput();
 
 		bool userInputLoop();
 		bool stateUpdateLoop();

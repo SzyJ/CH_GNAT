@@ -3,7 +3,7 @@
 #include <spdlog/spdlog.h>
 
 namespace GNAT {
-	static class GNAT_Log {
+	class GNAT_Log {
 	public:
 		static void init();
 
