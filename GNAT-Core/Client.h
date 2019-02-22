@@ -30,11 +30,16 @@ namespace GNAT {
 
 		bool threadsListening = false;
 
+		// General Helpers
 		bool sendToServer(const char* message, const int messageLen, const char* onErrorMsg = nullptr);
 		int listenForServerMessage(const int maxRetryCount);
-
 		char checkForUserInput();
 
+		// Helpers for establishing a connection
+		int listenForClientID();
+		bool listenForServerInit();
+
+		// Main Update Loops
 		bool userInputLoop();
 		bool stateUpdateLoop();
 

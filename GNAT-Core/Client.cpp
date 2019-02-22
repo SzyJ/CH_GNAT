@@ -79,6 +79,8 @@ namespace GNAT {
 			try {
 				int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
 
+				CLIENT_LOG_INFO("Message recieved from server: " + std::string(messageBuffer, bytesReceived));
+
 				return bytesReceived;
 			} catch (...) {
 				CLIENT_LOG_ERROR("An exception occurred when reading server response");
@@ -91,59 +93,75 @@ namespace GNAT {
 		return NO_MESSAGE_TO_RECEIVE;
 	}
 
+	int Client::listenForClientID() {
+		bool awaitingJoinAccept = true;
+		
+		while (awaitingJoinAccept) {
+			int serverMsgLength;
+
+			try {
+				serverMsgLength = listenForServerMessage();
+			}
+			catch (...) {
+				CLIENT_LOG_ERROR("Exception occurred when receiving data from server. Error code: " + std::to_string(WSAGetLastError()));
+				Sleep(100);
+				continue;
+			}
+
+			if (serverMsgLength > 0) {
+				if (!Messages::codesMatch(messageBuffer, serverMsgLength, Messages::JOIN_ACC)) {
+					CLIENT_LOG_ERROR("Failed to receive join ack from server. Retrying.... Server Msg: " + std::string(messageBuffer, serverMsgLength));
+					Sleep(100);
+					continue;
+				}
+				else if (serverMsgLength == MESSAGE_LENGTH) {
+					CLIENT_LOG_ERROR("Server join Acknowlegement did not contain this client's ID. Aborting connection. Server Msg: " + std::string(messageBuffer, serverMsgLength));
+					Sleep(100);
+					continue;
+				}
+
+				// Assuming that protocol only alows 1 byte for ID
+				Messages::dataByte receivedID(messageBuffer[MESSAGE_LENGTH]);
+
+				return (int) receivedID.unsignedByte;
+
+				awaitingJoinAccept = false;
+			}
+
+			Sleep(1);
+		}
+	}
+
+	bool Client::listenForServerInit() {
+
+
+	}
+
+
     bool Client::sendJoinRequest() {
         bool sendSuccessful = sendToServer(Messages::JOIN_REQ, MESSAGE_LENGTH, "Failed to send join request");
         if (!sendSuccessful) {
             return false;
         }
-
-
-		int serverMsgLength = listenForServerMessage();
-
-		if (!Messages::codesMatch(messageBuffer, serverMsgLength, Messages::JOIN_ACC)) {
-			CLIENT_LOG_ERROR("Failed to receive join ack from server. Aborting connection. Server Msg: " + std::string(messageBuffer, serverMsgLength));
+		
+		int receivedID = listenForClientID();
+		if (receivedID < 0) {
+			CLIENT_LOG_ERROR("An error occurred while getting client ID from server. Aborting connection. Error: " + std::to_string(receivedID));
 			return false;
-		} else if (serverMsgLength == MESSAGE_LENGTH) {
-			CLIENT_LOG_ERROR("Server join Acknowlegement did not contain this client's ID. Aborting connection. Server Msg: " + std::string(messageBuffer, serverMsgLength));
+		}
+		if (receivedID > UCHAR_MAX) {
+			CLIENT_LOG_ERROR("An invalid ID has been received from the server. Aborting connection. ID: " + std::to_string(receivedID));
+			return false;
+		}
+		thisID = (byte) receivedID;
+
+		bool initSuccessful = listenForServerInit();
+		if (!initSuccessful) {
+			CLIENT_LOG_ERROR("Failed to initialise values. Either server returned invalid data or initialisation failed.");
 			return false;
 		}
 
-		// Assuming that protocol only alows 1 byte for ID
-		thisID = messageBuffer[MESSAGE_LENGTH];
-
-        bool awaitingJoinAccept = true;
-        while (awaitingJoinAccept) {
-			SOCKADDR_IN serverAddr;
-			int serverSize = sizeof(serverAddr);
-
-			int bytesReceived = 0;
-			try {
-				bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
-			} catch (...) {
-				CLIENT_LOG_ERROR("Exception occurred when receiving data from server. Error code: " + std::to_string(WSAGetLastError()));
-				continue;
-			}
-
-			if (Messages::codesMatch(messageBuffer, bytesReceived, Messages::JOIN_ACC)) {
-				if (bytesReceived < MESSAGE_LENGTH + 1) {
-					CLIENT_LOG_ERROR("Failed to get initial Value from Server. Aborting connection.");
-					return false;
-				}
-				awaitingJoinAccept = false;
-
-				Messages::dataByte data(messageBuffer[MESSAGE_LENGTH]);
-				thisID = data.unsignedByte;
-
-				CLIENT_LOG_INFO("Client ID set to: " + std::to_string(thisID));
-				return true;
-			}
-
-			Sleep(1);
-        }
-
-		// TODO: Get initial Value from server
-
-        return false;
+        return true;
     }
 
 	char Client::checkForUserInput() {
