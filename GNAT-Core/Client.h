@@ -37,11 +37,11 @@ namespace GNAT {
 
 		// Helpers for establishing a connection
 		int listenForClientID();
-		bool listenForServerInit();
+		int listenForServerInit();
 
 		// Main Update Loops
-		bool userInputLoop();
-		bool stateUpdateLoop();
+		void userInputLoop();
+		void stateUpdateLoop();
 
 	public:
 		Client();

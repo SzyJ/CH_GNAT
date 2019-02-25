@@ -132,9 +132,26 @@ namespace GNAT {
 		}
 	}
 
-	bool Client::listenForServerInit() {
+	int Client::listenForServerInit() {
+		const int RETRY_COUNT = 3000;
 
+		// TODO: Maybe use a loop?
+		int bytesReceived = listenForServerMessage(RETRY_COUNT);
 
+		if (bytesReceived < MESSAGE_LENGTH) {
+			// Incorrect message Received
+			CLIENT_LOG_WARN("Incorrect message length received from server. Length: " + bytesReceived);
+			return -1; // TODO add error for failure to init
+		}
+
+		const int CLIENT_COUNT = (bytesReceived - MESSAGE_LENGTH) / 2;
+
+		for (int i = MESSAGE_LENGTH; i < CLIENT_COUNT; i += 2) {
+			Messages::dataByte thisID(messageBuffer[i]);
+			playerStates.at(thisID.unsignedByte) = messageBuffer[i + 1];
+		}
+
+		return CLIENT_COUNT;
 	}
 
 
@@ -175,9 +192,8 @@ namespace GNAT {
 		return NULL;
 	}
 
-	bool Client::userInputLoop() {
+	void Client::userInputLoop() {
 		// Listen for keyboard input and send update to server
-
 		char validKeycodeUpdate = NULL;
 
 		while (true) {
@@ -189,33 +205,40 @@ namespace GNAT {
 				continue;
 			}
 
-			// Send Update to server
+			const int thisMsgLength = MESSAGE_LENGTH + 1;
+			char message[thisMsgLength];
+			memcpy(message, Messages::UPDATE, MESSAGE_LENGTH);
+			message[MESSAGE_LENGTH] = validKeycodeUpdate;
+			
+			sendToServer(message, thisMsgLength);
+
+			validKeycodeUpdate = NULL;
+
+			Sleep(1);
 		}
-
-
-		return false;
 	}
 
-    bool Client::stateUpdateLoop() {
-		const int serverUpdateBufferLength = 1024;
-		char serverUpdateBuffer[serverUpdateBufferLength];
-
+    void Client::stateUpdateLoop() {
 		while (true) {
-			SOCKADDR_IN serverAddr;
-			int	serverAddrLen = sizeof(serverAddr);
+			int bytesReceived = listenForServerMessage();
 
-			ZeroMemory(serverUpdateBuffer, serverUpdateBufferLength);
+			if (bytesReceived < MESSAGE_LENGTH || (bytesReceived - MESSAGE_LENGTH) % 2 != 0) {
+				// Wrong Message Length received
+				CLIENT_LOG_WARN("Incorrect message length received from server. Length: " + bytesReceived);
 
-			int iResult = recvfrom(clientSocket, serverUpdateBuffer, serverUpdateBufferLength, 0, (sockaddr*)&serverAddr, &serverAddrLen);
-
-			if (iResult > 0) {
-				// Update Received
-			} else {
-				// connection failed. Exit?
+				Sleep(1);
+				continue;
 			}
-		}
 
-        return false;
+			int updatesReceived = (bytesReceived - MESSAGE_LENGTH) / 2;
+
+			for (int i = MESSAGE_LENGTH; i < updatesReceived; i += 2) {
+				Messages::dataByte thisID(messageBuffer[i]);
+				playerStates.at(thisID.unsignedByte) = messageBuffer[i + 1];
+			}
+
+			Sleep(1);
+		}
     }
 
 	bool Client::startListen() {
@@ -228,7 +251,7 @@ namespace GNAT {
 		//sendUpdates = std::thread(userInputLoop());
 		//recvUpdates = std::thread(stateUpdateLoop());
 
-		return false;
+		return true;
 	}
 
 	bool Client::stopListen() {

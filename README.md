@@ -10,8 +10,8 @@ Server:
 Client:
  - [X] Send Join Message to server
  - [ ] Respond to Ping request
- - [ ] Receive real state from server and update local values 
- - [ ] Listen for input from terminal. Send this update to Server
+ - [X] Receive real state from server and update local values 
+ - [X] Listen for input from terminal. Send this update to Server
  
 Peer (Session-Host):
  - [ ] Listen on one port for X Join Requests
