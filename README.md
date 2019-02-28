@@ -1,6 +1,14 @@
 # CH_GNAT
 Client Hosted Model - Game Networking API Template
 
+## To clone
+In order to also clone the 3rd party logging library, please remember to update submodules. Without this, the code will not compile.
+```
+git clone https://github.com/SzyJ/GNAT_Core
+git submodule update
+```
+
+
 # GNAT-Core Behaviours
 Server:
  - [X] Wait for X amount of clients to send msg, save their IP
