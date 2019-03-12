@@ -7,6 +7,10 @@ const byte ClientNode::getLastNodeID() {
 	return lastNodeID;
 }
 
+const byte ClientNode::getNextNodeID() {
+	return lastNodeID + (byte) 1;
+}
+
 const std::string ClientNode::to_string() const {
 	return address + ":" + std::to_string(port);
 }

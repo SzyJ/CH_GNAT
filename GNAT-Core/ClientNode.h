@@ -20,6 +20,7 @@ public:
 	};
 
 	static const byte getLastNodeID();
+	static const byte getNextNodeID();
 
 	const std::string to_string() const;
 

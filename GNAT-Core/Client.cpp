@@ -8,8 +8,9 @@ namespace GNAT {
     const USHORT Client::SERVER_PORT = 54000;
 
     Client::Client() {
+		GNAT_Log::init_client();
+
         // Startup WinSock
-        WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             errorFlag = WINSOCK_STARTUP_FAIL;
             CLIENT_LOG_ERROR("Failed to startup Winsock starting client");
@@ -18,7 +19,7 @@ namespace GNAT {
         CLIENT_LOG_INFO("WinSock startup success");
 
         // Set connection as UDP
-        clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
+        clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
         // Define server address
         serverAddress.sin_port = SERVER_PORT;
@@ -26,8 +27,7 @@ namespace GNAT {
         inet_pton(AF_INET, SERVER_ADDRESS.c_str(), &serverAddress.sin_addr);
 
         // Define client socket
-        SOCKADDR_IN clientAddr;
-        clientAddr.sin_port = 0;
+        clientAddr.sin_port = 0; // Choose any port
         clientAddr.sin_family = AF_INET;
         clientAddr.sin_addr.s_addr = INADDR_ANY;
 
@@ -41,7 +41,6 @@ namespace GNAT {
         int val = 64 * 1024;
         setsockopt(clientSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
         setsockopt(clientSocket, SOL_SOCKET, SO_RCVBUF, (char*)&val, sizeof(val));
-
     }
 
     Client::~Client() {
@@ -50,6 +49,11 @@ namespace GNAT {
         WSACleanup();
         CLIENT_LOG_INFO("Winsock cleanup done. Client connections shutdown");
     }
+
+	int Client::establishTCPConnection() {
+
+		return 0;
+	}
 
 	bool Client::sendToServer(const char* message, const int messageLen, const char* onErrorMsg) {
 		int bytesSent = IP_Utils::sendMessage(clientSocket, serverAddress, message, messageLen);
@@ -76,20 +80,21 @@ namespace GNAT {
 			SOCKADDR_IN serverAddr;
 			int serverSize = sizeof(serverAddr);
 
-			try {
+			//try {
 				int bytesReceived = recvfrom(clientSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&serverAddr, &serverSize);
+				if (bytesReceived > 0) {
+					CLIENT_LOG_INFO("Message recieved from server: " + std::string(messageBuffer, bytesReceived));
 
-				CLIENT_LOG_INFO("Message recieved from server: " + std::string(messageBuffer, bytesReceived));
-
-				return bytesReceived;
-			} catch (...) {
+					return bytesReceived;
+				}
+			/*} catch (...) {
 				CLIENT_LOG_ERROR("An exception occurred when reading server response");
 				return EXEPTION_DURING_MSG_RECEIVE;
-			}
+			}*/
 
 			Sleep(1);
 		}
-
+		
 		return NO_MESSAGE_TO_RECEIVE;
 	}
 
@@ -130,6 +135,8 @@ namespace GNAT {
 
 			Sleep(1);
 		}
+
+		return 0;
 	}
 
 	int Client::listenForServerInit() {
@@ -243,7 +250,7 @@ namespace GNAT {
 
 	bool Client::startListen() {
 		if (threadsListening) {
-			// Log info
+			// TODO: Log info
 			return false;
 		}
 		threadsListening = true;

@@ -1,10 +1,12 @@
 #pragma once
 
 #define MESSAGE_LENGTH 2
+#define ID_LENGTH 1
 
 struct Messages {
 	static const char* JOIN_REQ;
 	static const char* JOIN_ACC;
+	static const char* EXIT;
 	static const char* PING_REQ;
 	static const char* PING_RESP;
 	static const char* UPDATE;

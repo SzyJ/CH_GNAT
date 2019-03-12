@@ -3,6 +3,7 @@
 
 const char* Messages::JOIN_REQ = "JR";
 const char* Messages::JOIN_ACC = "JA";
+const char* Messages::EXIT = "EX";
 const char* Messages::PING_REQ = "PQ";
 const char* Messages::PING_RESP = "PS";
 const char* Messages::UPDATE = "UP";

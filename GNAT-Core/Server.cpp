@@ -2,12 +2,14 @@
 #include "Server.h"
 #include "IPUtils.h"
 #include "Messages.h"
+#include "ConnectionServer.h"
 
 namespace GNAT {
 	Server::Server() {
 		SetConsoleTitleA(("Server [" + std::to_string(PORT) + "]").c_str());
 
-		WSADATA wsaData;
+		GNAT_Log::init_server();
+
 		int wsaStartupCode = WSAStartup(MAKEWORD(2, 2), &wsaData);
 		if (wsaStartupCode != 0) {
 			errorFlag = WINSOCK_STARTUP_FAIL;
@@ -16,7 +18,6 @@ namespace GNAT {
 		}
 		SERVER_LOG_INFO("Winsock startup success");
 
-		SOCKADDR_IN sockAddr;
 		sockAddr.sin_port = htons(PORT);
 		sockAddr.sin_family = AF_INET;
 		sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -32,7 +33,6 @@ namespace GNAT {
 
 		int val = 64 * 1024;
 		setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
-		setsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&val, sizeof(val));
 
 		listen(serverSocket, 1000);
 		SERVER_LOG_INFO("Server listen start");
@@ -47,6 +47,19 @@ namespace GNAT {
 
 	void Server::clearMessageBuffer() {
 		ZeroMemory(messageBuffer, MESSAGE_BUFFER_SIZE);
+	}
+
+	void Server::startConnectionServer() {
+		ConnectionServer* connServer = new ConnectionServer();
+
+		SERVER_LOG_INFO("Starting Winsock...");
+		connServer->initializeWinSock();
+
+		SERVER_LOG_INFO("Establishing TCP Connection..");
+		connServer->establishTCPConnection();
+
+		SERVER_LOG_INFO("Killing Connection Server..");
+		delete connServer;
 	}
 
 	void Server::openToClientConnection() {
@@ -64,9 +77,7 @@ namespace GNAT {
 			int bytesReceived = recvfrom(serverSocket, messageBuffer, MESSAGE_BUFFER_SIZE, 0, (sockaddr*)&clientAddr, &clientSize);
 
 			if (Messages::codesMatch(messageBuffer, bytesReceived, Messages::JOIN_REQ)) {
-				clientIPList.emplace_back(clientAddr);
-
-				Messages::dataByte thisClientsID(ClientNode::getLastNodeID());
+				Messages::dataByte thisClientsID(ClientNode::getNextNodeID());
 
 				const int messageLen = MESSAGE_LENGTH + 1; // Join_Ack + ID
 				char message[messageLen];
@@ -85,11 +96,10 @@ namespace GNAT {
 				if (bytesSent <= 0) {
 					SERVER_LOG_ERROR("Failed to send Join_Ack. Error code: " + std::to_string(WSAGetLastError()));
 
-					// TODO: Remove player from clientIPList
-
-					//continue;
+					continue;
 				}
 
+				clientIPList.emplace_back(clientAddr);
 
 				SERVER_LOG_INFO("    [" + std::to_string(currentClientCount) + "/" + std::to_string(TARGET_CLIENT_COUNT) + "] client found: " + clientIPList.at(currentClientCount).to_string());
 				++currentClientCount;
@@ -102,6 +112,32 @@ namespace GNAT {
 
 		// Loop through each client node IDs
 		// send a value to each one. can be the same eg 0
+	}
+
+	bool Server::startServer() {
+		if (threadsRunning) {
+			// TODO: Log info
+			return false;
+		}
+		threadsRunning = true;
+
+		//sendUpdates = std::thread(broadcastState);
+		//recvUpdates = std::thread(startListen);
+
+		return true;
+	}
+
+	bool Server::stopServer() {
+		if (!threadsRunning) {
+			// Log info
+			return false;
+		}
+
+		threadsRunning = false;
+
+		// Stop Threads somehow
+
+		return true;
 	}
 
 	void Server::broadcastState() {
@@ -144,8 +180,9 @@ namespace GNAT {
 			if (bytesReceived > 0) {
 				try {
 					// TODO
-				} catch (...) {
-				
+				}
+				catch (...) {
+
 				}
 			}
 
