@@ -107,6 +107,8 @@ void join() {
 				std::cout << "  Could not stop threads. Threads are not runnng!" << std::endl;
 			}
 
+		} else if (cmd == "conn") {
+			client->connectToServer();
 		}
 	}
 

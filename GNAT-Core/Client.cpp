@@ -2,10 +2,11 @@
 #include "Client.h"
 #include "IPUtils.h"
 #include "Messages.h"
+#include "ConnectionClient.h"
 
 namespace GNAT {
     const std::string Client::SERVER_ADDRESS = "127.0.0.1";
-    const USHORT Client::SERVER_PORT = 54000;
+    const USHORT Client::PORT = 54000;
 
     Client::Client() {
 		GNAT_Log::init_client();
@@ -22,7 +23,7 @@ namespace GNAT {
         clientSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
         // Define server address
-        serverAddress.sin_port = SERVER_PORT;
+        serverAddress.sin_port = PORT;
         serverAddress.sin_family = AF_INET;
         inet_pton(AF_INET, SERVER_ADDRESS.c_str(), &serverAddress.sin_addr);
 
@@ -272,6 +273,33 @@ namespace GNAT {
 		// Stop Threads somehow
 
 		return true;
+	}
+
+	bool Client::connectToServer() {
+		ConnectionClinet* conn = new ConnectionClinet();
+		int success = 0;
+
+		success = conn->initializeWinSock();
+		if (success < 0) {
+			CLIENT_LOG_ERROR("Failed to initialise");
+			return false;
+		}
+
+		success = conn->connectToServer();
+		if (success < 0) {
+			CLIENT_LOG_ERROR("Failed to connect");
+			return false;
+		}
+
+		success = conn->sendJoinRequest();
+		if (success < 0) {
+			CLIENT_LOG_ERROR("Failed to receive: " + std::to_string(success));
+			return false;
+		}
+
+		CLIENT_LOG_INFO("Successfully joined with ID: " + std::to_string(success));
+		return true;
+
 	}
 
     const int Client::getErrorCode() const {

@@ -15,7 +15,7 @@ namespace GNAT {
 		// Connection Vars
 		WSADATA wsaData;
 		const static std::string SERVER_ADDRESS;
-		const static USHORT SERVER_PORT;
+		const static USHORT PORT;
 		const static int MESSAGE_BUFFER_SIZE = 1024;
 		char messageBuffer[MESSAGE_BUFFER_SIZE];
 		SOCKADDR_IN clientAddr;
@@ -54,6 +54,8 @@ namespace GNAT {
 		bool sendJoinRequest();
 		bool startListen();
 		bool stopListen();
+
+		bool connectToServer();
 
 		const int getErrorCode() const;
 	};

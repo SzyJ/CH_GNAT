@@ -8,19 +8,24 @@ ConnectionClinet::ConnectionClinet() {
 
 }
 
+ConnectionClinet::~ConnectionClinet() {
+	closesocket(clientSock);
+	WSACleanup();
+}
+
 int ConnectionClinet::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
 	if (WSAStartup(DllVersion, &wsaData) != 0) {
-		SERVER_LOG_ERROR("Failed to initialise WinSock in connection server.");
+		CLIENT_LOG_ERROR("Failed to initialise WinSock in connection server.");
 		return WINSOCK_STARTUP_FAIL;
 	}
 
 	// Create Socket
 	clientSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (clientSock < 0) {
-		SERVER_LOG_ERROR("A socket could not be created. Aborting...");
+		CLIENT_LOG_ERROR("A socket could not be created. Aborting...");
 		WSACleanup();
 		return SOCKET_CREATION_FAIL;
 	}
@@ -31,12 +36,15 @@ int ConnectionClinet::initializeWinSock() {
 	hint.sin_family = AF_INET;
 	inet_pton(AF_INET, SERVER_ADDR, &hint.sin_addr);
 
+
+	listen(clientSock, SOMAXCONN);
+
 	return STARTUP_SUCCESSFUL;
 }
 
 int ConnectionClinet::connectToServer() {
 	if (connect(clientSock, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
-		SERVER_LOG_ERROR("Failed to connect to the server, Aborting!");
+		CLIENT_LOG_ERROR("Failed to connect to the server, Aborting!");
 		closesocket(clientSock);
 		WSACleanup();
 		return FAILED_TO_CONNECT_TO_SERVER;
@@ -49,7 +57,7 @@ int ConnectionClinet::connectToServer() {
 
 int ConnectionClinet::sendJoinRequest() {
 	if (!connectionEstablished) {
-		SERVER_LOG_ERROR("Attempting to send message without establishing connection...");
+		CLIENT_LOG_ERROR("Attempting to send message without establishing connection...");
 		return NOT_CONNECTED_TO_SERVER;
 	}
 
@@ -62,23 +70,31 @@ int ConnectionClinet::sendJoinRequest() {
 
 	int bytesSent = send(clientSock, joinMessageBuffer, JOIN_MESSAGE_LENGTH, 0);
 	if (bytesSent < JOIN_MESSAGE_LENGTH) {
-		SERVER_LOG_ERROR("Failed to send Join Message to server...");
+		CLIENT_LOG_ERROR("Failed to send Join Message to server...");
 		return FAILED_TO_SEND_MESSAGE;
 	}
 
 	// Listen for server response
-	ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
-	int bytesReceived = recv(clientSock, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
-	if (bytesReceived <= 0) {
+	int bytesReceived = 0;
+	bool response = false;
+	while (!response) {
+		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
+		bytesReceived = recv(clientSock, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
 
-		// TODO!
+		if (bytesReceived > 0) {
+			CLIENT_LOG_INFO("MSG [" + std::to_string(bytesReceived) + " bytes]: " + std::string(receiveBuffer, bytesReceived));
+			response = true;
+		} else {
+			Sleep(5);
+		}
 	}
 
-	if (Messages::codesMatch(receiveBuffer, bytesReceived, Messages::JOIN_ACC)
-		&& bytesReceived > MESSAGE_LENGTH) {
-		
-
+	if (!Messages::codesMatch(receiveBuffer, bytesReceived, Messages::JOIN_ACC)) {
+		CLIENT_LOG_INFO("Unexpected message received");
+		return UNEXPECTED_MESSAGE;
 	}
 
-
+	Messages::dataByte clientID(receiveBuffer[MESSAGE_LENGTH]);
+	CLIENT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID.unsignedByte));
+	return (int)clientID.unsignedByte;
 }

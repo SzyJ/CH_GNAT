@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientNode.cpp" />
+    <ClCompile Include="ConnectionClient.cpp" />
     <ClCompile Include="ConnectionServer.cpp" />
     <ClCompile Include="IPUtils.cpp" />
     <ClCompile Include="log.cpp" />
@@ -36,6 +37,7 @@
   <ItemGroup>
     <ClInclude Include="Client.h" />
     <ClInclude Include="ClientNode.h" />
+    <ClInclude Include="ConnectionClient.h" />
     <ClInclude Include="ConnectionServer.h" />
     <ClInclude Include="ErrorCodes.h" />
     <ClInclude Include="IPUtils.h" />

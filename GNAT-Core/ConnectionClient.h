@@ -16,6 +16,7 @@ private:
 
 public:
 	ConnectionClinet();
+	~ConnectionClinet();
 
 	int initializeWinSock();
 	int connectToServer();
