@@ -10,7 +10,7 @@ ConnectionServer::ConnectionServer() {
 int ConnectionServer::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
-	WORD DllVersion = MAKEWORD(2, 2);
+	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
 	if (WSAStartup(DllVersion, &wsaData) != 0) {
 		SERVER_LOG_ERROR("Failed to initialise WinSock in connection server.");
 		return WINSOCK_STARTUP_FAIL;
@@ -46,6 +46,8 @@ int ConnectionServer::establishTCPConnection() {
 	FD_ZERO(&master);
 	FD_SET(listenSock, &master);
 
+	std::map<SOCKET, SOCKADDR_IN> socketMap;
+
 	while(true) {
 		fd_set copy = master;
 		int socketCount = select(0, &copy, nullptr, nullptr, nullptr);
@@ -57,13 +59,15 @@ int ConnectionServer::establishTCPConnection() {
 				// Accept new connection
 				SOCKADDR_IN clientInfo;
 				int clientInfoSize = sizeof(clientInfo);
+
 				SOCKET client = accept(listenSock, (sockaddr*)&clientInfo, &clientInfoSize);
 
 				FD_SET(client, &master);
 
+				socketMap.insert(std::pair<SOCKET, SOCKADDR_IN>(client, clientInfo));
+
 				// Send msg on join?
 				SERVER_LOG_INFO("Clinet Has Connected!");
-
 			}
 			else {
 				// Accept new Message
@@ -98,15 +102,17 @@ int ConnectionServer::establishTCPConnection() {
 						continue;
 					}
 
-					SERVER_LOG_INFO("Adding Client to list");
-					
-					
-					
-					//clientIPList.emplace_back(); // TODO: ADD client to list.
-					
+					if (socketMap.find(thisSock) != socketMap.end()) {
+						SERVER_LOG_INFO("Adding Client to list");
+						clientIPList.emplace_back(socketMap[thisSock]);	
+					} else {
+						SERVER_LOG_INFO("Could not find clinet info, could not add client.");
+						// At this point the client doesnt know yet that they have not been added.
+					}
 
 				} else if (Messages::codesMatch(msgBuffer, msgLength, Messages::EXIT)) {
 					SERVER_LOG_INFO("Exit Message Received");
+					// Not implemented
 				}
 			}
 		}

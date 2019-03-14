@@ -9,8 +9,6 @@
 #define FAMILY AF_INET
 #define TYPE SOCK_STREAM
 #define FLAGS AI_PASSIVE
-#define BACKLOG 10
-#define BUFFSIZE 100
 
 class ConnectionServer {
 private:
@@ -21,11 +19,8 @@ private:
 	std::vector<ClientNode> clientIPList;
 
 public:
-
 	ConnectionServer();
 
 	int initializeWinSock();
-
-
 	int establishTCPConnection();
 };
