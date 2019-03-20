@@ -23,6 +23,9 @@
     <ClCompile Include="ClientNode.cpp" />
     <ClCompile Include="ConnectionClient.cpp" />
     <ClCompile Include="ConnectionServer.cpp" />
+    <ClCompile Include="GameClient.cpp" />
+    <ClCompile Include="GameClient.h" />
+    <ClCompile Include="GameServer.cpp" />
     <ClCompile Include="IPUtils.cpp" />
     <ClCompile Include="log.cpp" />
     <ClCompile Include="Messages.cpp" />
@@ -40,6 +43,7 @@
     <ClInclude Include="ConnectionClient.h" />
     <ClInclude Include="ConnectionServer.h" />
     <ClInclude Include="ErrorCodes.h" />
+    <ClInclude Include="GameServer.h" />
     <ClInclude Include="IPUtils.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="Messages.h" />
