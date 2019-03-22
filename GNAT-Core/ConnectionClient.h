@@ -8,8 +8,7 @@
 
 class ConnectionClinet {
 private:
-	WSAData wsaData;
-	SOCKET clientSock;
+	SOCKET clientSocket;
 	SOCKADDR_IN hint;
 
 	bool connectionEstablished = false;

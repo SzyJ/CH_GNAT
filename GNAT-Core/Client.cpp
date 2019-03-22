@@ -3,6 +3,7 @@
 #include "IPUtils.h"
 #include "Messages.h"
 #include "ConnectionClient.h"
+#include "GameClient.h"
 
 namespace GNAT {
     const std::string Client::SERVER_ADDRESS = "127.0.0.1";
@@ -276,6 +277,7 @@ namespace GNAT {
 	}
 
 	bool Client::connectToServer() {
+		// TODO: Cleanup
 		ConnectionClinet* conn = new ConnectionClinet();
 		int success = 0;
 
@@ -299,7 +301,12 @@ namespace GNAT {
 
 		CLIENT_LOG_INFO("Successfully joined with ID: " + std::to_string(success));
 		return true;
+	}
 
+	bool Client::startGameServer() {
+		// TODO: Cleanup
+		GameClient* client = new GameClient();
+		int success = 0;
 	}
 
     const int Client::getErrorCode() const {

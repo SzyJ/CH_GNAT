@@ -5,6 +5,8 @@
 namespace GNAT {
 	class Client {
 	private:
+		bool serverConnectionSuccessful = false;
+
 		Error_Code errorFlag = STARTUP_SUCCESSFUL;
 
 		const static int PLAYER_COUNT = 4;
@@ -56,6 +58,7 @@ namespace GNAT {
 		bool stopListen();
 
 		bool connectToServer();
+		bool startGameServer();
 
 		const int getErrorCode() const;
 	};

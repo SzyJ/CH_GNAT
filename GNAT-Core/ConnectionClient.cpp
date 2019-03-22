@@ -9,7 +9,7 @@ ConnectionClinet::ConnectionClinet() {
 }
 
 ConnectionClinet::~ConnectionClinet() {
-	closesocket(clientSock);
+	closesocket(clientSocket);
 	WSACleanup();
 }
 
@@ -23,8 +23,8 @@ int ConnectionClinet::initializeWinSock() {
 	}
 
 	// Create Socket
-	clientSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (clientSock < 0) {
+	clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if (clientSocket < 0) {
 		CLIENT_LOG_ERROR("A socket could not be created. Aborting...");
 		WSACleanup();
 		return SOCKET_CREATION_FAIL;
@@ -37,15 +37,15 @@ int ConnectionClinet::initializeWinSock() {
 	inet_pton(AF_INET, SERVER_ADDR, &hint.sin_addr);
 
 
-	listen(clientSock, SOMAXCONN);
+	listen(clientSocket, SOMAXCONN);
 
 	return STARTUP_SUCCESSFUL;
 }
 
 int ConnectionClinet::connectToServer() {
-	if (connect(clientSock, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
+	if (connect(clientSocket, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
 		CLIENT_LOG_ERROR("Failed to connect to the server, Aborting!");
-		closesocket(clientSock);
+		closesocket(clientSocket);
 		WSACleanup();
 		return FAILED_TO_CONNECT_TO_SERVER;
 	}
@@ -68,7 +68,7 @@ int ConnectionClinet::sendJoinRequest() {
 	char joinMessageBuffer[JOIN_MESSAGE_LENGTH];
 	memcpy(joinMessageBuffer, Messages::JOIN_REQ, MESSAGE_LENGTH);
 
-	int bytesSent = send(clientSock, joinMessageBuffer, JOIN_MESSAGE_LENGTH, 0);
+	int bytesSent = send(clientSocket, joinMessageBuffer, JOIN_MESSAGE_LENGTH, 0);
 	if (bytesSent < JOIN_MESSAGE_LENGTH) {
 		CLIENT_LOG_ERROR("Failed to send Join Message to server...");
 		return FAILED_TO_SEND_MESSAGE;
@@ -79,7 +79,7 @@ int ConnectionClinet::sendJoinRequest() {
 	bool response = false;
 	while (!response) {
 		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
-		bytesReceived = recv(clientSock, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
+		bytesReceived = recv(clientSocket, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
 
 		if (bytesReceived > 0) {
 			CLIENT_LOG_INFO("MSG [" + std::to_string(bytesReceived) + " bytes]: " + std::string(receiveBuffer, bytesReceived));

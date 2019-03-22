@@ -1,135 +1,96 @@
 #include "pch.h"
 #include "GameClient.h"
+#include "ErrorCodes.h"
 #include <thread>
 
-const int BUFFERLENGTH = 1024;
+GameClient::GameClient() {
 
-char buffer[BUFFERLENGTH];
-
-SOCKET connectSocket;
-SOCKADDR_IN otherAddr;
-int otherSize;
-
-std::string GameClient::NormalizedIPString(SOCKADDR_IN addr) {
-	char host[16];
-	ZeroMemory(host, 16);
-	inet_ntop(AF_INET, &addr.sin_addr, host, 16);
-
-	USHORT port = ntohs(addr.sin_port);
-
-	int realLen = 0;
-	for (int i = 0; i < 16; i++) {
-		if (host[i] == '\00') {
-			break;
-		}
-		realLen++;
-	}
-
-	std::string res(host, realLen);
-	res += ":" + std::to_string(port);
-
-	return res;
 }
 
-void GameClient::TaskRec() {
+GameClient::~GameClient() {
+	closesocket(clientSocket);
+	WSACleanup();
+}
+
+void GameClient::ListenForUpdates() {
+	const int BUFFER_SIZE = 1024;
+	char msgBuffer[BUFFER_SIZE];
+
 	while (true) {
 		SOCKADDR_IN remoteAddr;
 		int	remoteAddrLen = sizeof(remoteAddr);
 
-		int iResult = recvfrom(connectSocket, buffer, BUFFERLENGTH, 0, (sockaddr*)&remoteAddr, &remoteAddrLen);
+		int bytesReceived = recvfrom(clientSocket, msgBuffer, BUFFER_SIZE, 0, (sockaddr*)&remoteAddr, &remoteAddrLen);
 
-		if (iResult > 0) {
-			std::cout << NormalizedIPString(remoteAddr) << " -> " << std::string(buffer, buffer + iResult) << std::endl;
+		if (bytesReceived > 0) {
+			// Update Values
+		} else {
+			CLIENT_LOG_ERROR("The connection to the server has been lost.");
 		}
-		else {
-			std::cout << "Error: Peer closed." << std::endl;
-		}
+
+		Sleep(1);
 	}
+}
+
+int GameClient::initializeWinsock() {
+	// Init WinSock
+	WSAData wsaData;
+	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
+	if (WSAStartup(DllVersion, &wsaData) != 0) {
+		CLIENT_LOG_ERROR("Failed to initialise WinSock in connection server.");
+		return WINSOCK_STARTUP_FAIL;
+	}
+
+	// Create Socket
+	clientSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (clientSocket < 0) {
+		CLIENT_LOG_ERROR("A socket could not be created. Aborting...");
+		WSACleanup();
+		return SOCKET_CREATION_FAIL;
+	}
+
+	// Define Server Info
+	ZeroMemory(&serverHint, sizeof(serverHint));
+	serverHint.sin_port = htons(SERVER_PORT);
+	serverHint.sin_family = AF_INET;
+	inet_pton(AF_INET, SERVER_ADDR, &serverHint.sin_addr);
+
+	// Define Client Info
+	int clientSize = sizeof(clientHint);
+	ZeroMemory(&clientHint, clientSize);
+	clientHint.sin_port = 0; // Any Port
+	clientHint.sin_family = AF_INET;
+	clientHint.sin_addr.s_addr = INADDR_ANY;
+
+	// Bind Socket
+	if (bind(clientSocket, (LPSOCKADDR)&clientHint, clientSize) == SOCKET_ERROR) {
+		CLIENT_LOG_ERROR("Failed to bind client socket. Aborting...");
+		WSACleanup();
+		return BINDING_SOCKET_FAIL;
+	}
+
+	// Set Socket Options
+	int val = 64 * 1024;
+	setsockopt(clientSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
+	
+	return STARTUP_SUCCESSFUL;
 }
 
 int GameClient::startClient() {
 	SetConsoleTitleA("Client");
 
-	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-		return 0;
-	}
-
-	SOCKADDR_IN serverAddr;
-	serverAddr.sin_port = htons(54000);
-	serverAddr.sin_family = AF_INET;
-	//serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	inet_pton(AF_INET, "127.0.0.1", &serverAddr.sin_addr);
-
-	int serverSize = sizeof(serverAddr);
-
-	connectSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-	SOCKADDR_IN clientAddr;
-	clientAddr.sin_port = 0;
-	clientAddr.sin_family = AF_INET;
-	clientAddr.sin_addr.s_addr = INADDR_ANY;
-
-	if (bind(connectSocket, (LPSOCKADDR)&clientAddr, sizeof(clientAddr)) == SOCKET_ERROR) {
-		return 0;
-	}
-
-	int val = 64 * 1024;
-	setsockopt(connectSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
-	setsockopt(connectSocket, SOL_SOCKET, SO_RCVBUF, (char*)&val, sizeof(val));
-
-	std::string request = "1";
-	std::cout << "Identificationnumber: ";
-	std::cin >> request;
-
-	int bytesSent = sendto(connectSocket, request.c_str(), request.length(), 0, (sockaddr*)&serverAddr, serverSize);
-	std::cout << "Bytes sent to: " << bytesSent << std::endl;
-
-
-	bool notFound = true;
-
-	std::string endpoint;
-
-	while (notFound) {
-		SOCKADDR_IN remoteAddr;
-		int	remoteAddrLen = sizeof(remoteAddr);
-
-		int iResult = recvfrom(connectSocket, buffer, BUFFERLENGTH, 0, (sockaddr*)&remoteAddr, &remoteAddrLen);
-
-		std::cout << "iResult: " << iResult << std::endl;
-		if (iResult > 0) {
-			endpoint = std::string(buffer, buffer + iResult);
-
-			std::cout << "Peer-to-peer Endpoint: " << endpoint << std::endl;
-
-			notFound = false;
-		}
-		else {
-
-			std::cout << WSAGetLastError();
-		}
-	}
-
-	std::string host = endpoint.substr(0, endpoint.find(':'));
-	int port = stoi(endpoint.substr(endpoint.find(':') + 1));
-
-	otherAddr.sin_port = htons(port);
-	otherAddr.sin_family = AF_INET;
-	//otherAddr.sin_addr.s_addr = inet_addr(host.c_str());
-	inet_pton(AF_INET, host.c_str(), &otherAddr.sin_addr);
-
-	otherSize = sizeof(otherAddr);
-
-	std::thread t1(TaskRec);
+	std::thread listenThread(&ListenForUpdates);
 
 	while (true) {
-		std::string msg = "Hello world!";
-		sendto(connectSocket, msg.c_str(), msg.length(), 0, (sockaddr*)&otherAddr, otherSize);
+		// Listen for keyboard input
+
+		// Make message with update value
+		char* msg;
+		int msgLen = sizeof(msg);
+
+		// Send message to server
+		sendto(clientSocket, msg, msgLen, 0, (sockaddr*)&serverHint, sizeof(serverHint));
 		Sleep(500);
 	}
 
-	getchar();
-
-	closesocket(connectSocket);
-	WSACleanup();
 }

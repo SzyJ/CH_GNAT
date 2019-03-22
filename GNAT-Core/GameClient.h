@@ -1,17 +1,29 @@
 #include "pch.h"
 
+#define HIGHVERSION 2
+#define LOWVERSION 2
+#define SERVER_ADDR "127.0.0.1"
+#define SERVER_PORT 45000
+
 class GameClient {
 private:
-	const static int BUFFERLENGTH = 1024;
-	char buffer[BUFFERLENGTH];
+	SOCKET clientSocket;
+	SOCKADDR_IN serverHint;
+	SOCKADDR_IN clientHint;
+	
 
-	SOCKET connectSocket;
-	SOCKADDR_IN otherAddr;
+
+
+	
 	int otherSize;
 
 	std::string NormalizedIPString(SOCKADDR_IN addr);
-	void TaskRec();
+	void ListenForUpdates();
 
 public:
+	GameClient();
+	~GameClient();
+
+	int initializeWinsock();
 	int startClient();
 };
