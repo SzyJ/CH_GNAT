@@ -1,6 +1,8 @@
 #include "pch.h"
 #include "GameClient.h"
 #include "ErrorCodes.h"
+#include "IPUtils.h"
+#include "Messages.h"
 #include <thread>
 
 GameClient::GameClient() {
@@ -11,6 +13,36 @@ GameClient::~GameClient() {
 	closesocket(clientSocket);
 	WSACleanup();
 }
+
+
+char GameClient::checkForUserInput() {
+	for (int i = 0; i < 10; ++i) {
+		if (GetAsyncKeyState(0x30 + i)) {
+			return '0' + i;
+		}
+	}
+
+	return NULL;
+}
+
+
+bool GameClient::sendToServer(const char* message, const int messageLen, const char* onErrorMsg) {
+	int bytesSent = IP_Utils::sendMessage(clientSocket, serverHint, message, messageLen);
+	if (bytesSent != messageLen) {
+		if (onErrorMsg != nullptr) {
+			CLIENT_LOG_ERROR(onErrorMsg);
+		}
+		else {
+			CLIENT_LOG_ERROR("Failed to send message to server: " + std::string(message, messageLen));
+		}
+		return false;
+	}
+
+	CLIENT_LOG_INFO("Message sent to server: " + std::string(message, messageLen));
+
+	return true;
+}
+
 
 void GameClient::ListenForUpdates() {
 	const int BUFFER_SIZE = 1024;
@@ -27,6 +59,32 @@ void GameClient::ListenForUpdates() {
 		} else {
 			CLIENT_LOG_ERROR("The connection to the server has been lost.");
 		}
+
+		Sleep(1);
+	}
+}
+
+void GameClient::ListenForKeyboard() {
+	// Listen for keyboard input and send update to server
+	char validKeycodeUpdate = NULL;
+
+	while (true) {
+		validKeycodeUpdate = checkForUserInput();
+
+		if (validKeycodeUpdate == NULL ||
+			validKeycodeUpdate == thisVal) {
+			Sleep(1);
+			continue;
+		}
+
+		const int thisMsgLength = MESSAGE_LENGTH + 1;
+		char message[thisMsgLength];
+		memcpy(message, Messages::UPDATE, MESSAGE_LENGTH);
+		message[MESSAGE_LENGTH] = validKeycodeUpdate;
+
+		sendToServer(message, thisMsgLength);
+
+		validKeycodeUpdate = NULL;
 
 		Sleep(1);
 	}
@@ -81,16 +139,6 @@ int GameClient::startClient() {
 
 	std::thread listenThread(&ListenForUpdates);
 
-	while (true) {
-		// Listen for keyboard input
-
-		// Make message with update value
-		char* msg;
-		int msgLen = sizeof(msg);
-
-		// Send message to server
-		sendto(clientSocket, msg, msgLen, 0, (sockaddr*)&serverHint, sizeof(serverHint));
-		Sleep(500);
-	}
+	ListenForKeyboard();
 
 }
