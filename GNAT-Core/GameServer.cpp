@@ -1,102 +1,127 @@
 #include "pch.h"
 #include "GameServer.h"
+#include "ErrorCodes.h"
+#include "Messages.h"
+#include <thread>
+#include "ServerConfigs.h"
 
-#pragma comment(lib,"ws2_32.lib")
-
-std::string GameServer::NormalizedIPString(SOCKADDR_IN addr) {
-	char host[16];
-	ZeroMemory(host, 16);
-	inet_ntop(AF_INET, &addr.sin_addr, host, 16);
-
-	USHORT port = ntohs(addr.sin_port);
-
-	int realLen = 0;
-	for (int i = 0; i < 16; i++) {
-		if (host[i] == '\00') {
-			break;
-		}
-		realLen++;
-	}
-
-	std::string res(host, realLen);
-	res += ":" + std::to_string(port);
-
-	return res;
+GameServer::GameServer() {
+	SetConsoleTitleA(("Server [" + std::to_string(PORT) + "]").c_str());
 }
 
-void GameServer::SendResponse(SOCKADDR_IN addr, SOCKADDR_IN receiver) {
-	int size = sizeof(addr);
+GameServer::~GameServer() {
+	closesocket(serverSocket);
+	WSACleanup();
+}
 
-	std::string msg = NormalizedIPString(addr);
+void GameServer::startStateBroadcast() {
+	const int MAX_MSG_LENGTH = MESSAGE_LENGTH + (clientIPList->size() * 2);
+	char* updateMsg = new char[MAX_MSG_LENGTH];
 
-	sendto(serverSocket, msg.c_str(), msg.length(), 0, (sockaddr*)&receiver, sizeof(receiver));
+	while (true) {
+		int clientCount = clientIPList->size();
+		int thisMsgLength = MESSAGE_LENGTH + (clientCount * 2);
+		strcpy_s(updateMsg, MESSAGE_LENGTH, Messages::CURRENT_STATE);
+
+		int clinetStepper = 0;
+		for (int i = MESSAGE_LENGTH; clinetStepper < clientCount; i += 2, ++clinetStepper) {
+			ClientNode* thisClient = clientIPList->at(clinetStepper);
+
+			Messages::dataByte thisID(thisClient->getNodeID());
+			char thisVal = thisClient->getUpdateValue();
+
+			updateMsg[i] = thisID.signedByte;
+			updateMsg[i + 1] = thisVal;
+		}
+
+		// Broadcast Message
+		for (int i = 0; i < clientCount; ++i) {
+			IP_Utils::sendMessage(serverSocket, clientIPList->at(i)->getClient(), updateMsg, thisMsgLength);
+		}
+
+		Sleep(SEND_DELAY);
+	}
+}
+
+bool GameServer::setClientList(std::vector<ClientNode*>* clientIPList) {
+	bool overriden = this->clientIPList != NULL;
+	this->clientIPList = clientIPList;
+	return overriden;
+}
+
+int GameServer::initializeWinSock() {
+	// Init WinSock
+	WSAData wsaData;
+	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
+	if (WSAStartup(DllVersion, &wsaData) != 0) {
+		SERVER_LOG_ERROR("Failed to initialise WinSock in game server.");
+		return WINSOCK_STARTUP_FAIL;
+	}
+
+	// Create Socket
+	serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (serverSocket < 0) {
+		SERVER_LOG_ERROR("A socket could not be created. Aborting...");
+		WSACleanup();
+		return SOCKET_CREATION_FAIL;
+	}
+
+	// Define Server Info
+	const int SERVER_HINT_SIZE = sizeof(serverHint);
+	ZeroMemory(&serverHint, SERVER_HINT_SIZE);
+	serverHint.sin_port = htons(PORT);
+	serverHint.sin_family = AF_INET;
+	serverHint.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	// Bind Socket
+	if (bind(serverSocket, (LPSOCKADDR)&serverHint, SERVER_HINT_SIZE) == SOCKET_ERROR) {
+		SERVER_LOG_ERROR("Failed to bind server socket. Aborting...");
+		WSACleanup();
+		return BINDING_SOCKET_FAIL;
+	}
+
+	// Set Socket Options
+	int val = 64 * 1024;
+	setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
+
+	listen(serverSocket, SOMAXCONN);
+
+	return STARTUP_SUCCESSFUL;
 }
 
 int GameServer::startServer() {
-	SetConsoleTitleA(("Server [" + std::to_string(PORT) + "]").c_str());
+	//std::thread stateUpdate(&startStateBroadcast);
 
-	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
-		return 0;
-	}
-
-	SOCKADDR_IN sockAddr;
-	sockAddr.sin_port = htons(PORT);
-	sockAddr.sin_family = AF_INET;
-	sockAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-	serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
-
-	if (bind(serverSocket, (LPSOCKADDR)&sockAddr, sizeof(sockAddr)) == SOCKET_ERROR) {
-		return 0;
-	}
-
-	int val = 64 * 1024;
-	setsockopt(serverSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
-	setsockopt(serverSocket, SOL_SOCKET, SO_RCVBUF, (char*)&val, sizeof(val));
-
-	listen(serverSocket, 1000);
+	const int BUFFER_LENGTH = 1024;
+	char buffer[BUFFER_LENGTH];
 
 	while (true) {
+		ZeroMemory(buffer, BUFFER_LENGTH);
 		SOCKADDR_IN clientAddr;
 		int clientSize = sizeof(clientAddr);
 
-		char buffer[1024];
-		int bufferLength = 1024;
+		int bytesReceived = recvfrom(serverSocket, buffer, BUFFER_LENGTH, 0, (sockaddr*)&clientAddr, &clientSize);
 
-		int iResult = recvfrom(serverSocket, buffer, bufferLength, 0, (sockaddr*)&clientAddr, &clientSize);
+		if (bytesReceived > 0) {
+			SERVER_LOG_INFO("Message Received: " + std::string(buffer, bytesReceived));
+			
+			if (bytesReceived >= MESSAGE_LENGTH + 2 &&
+				Messages::codesMatch(buffer, bytesReceived, Messages::UPDATE)) {
+				Messages::dataByte idByte(buffer[MESSAGE_LENGTH]);
+				char val(buffer[MESSAGE_LENGTH + 1]);
 
-		if (iResult > 0) {
-			try {
-				int id = stoi(std::string(buffer, buffer + iResult));
-
-				if (current.find(id) != current.end()) {
-					SOCKADDR_IN other = current[id];
-
-					SendResponse(other, clientAddr);
-					SendResponse(clientAddr, other);
-
-					std::cout << "Linked" << std::endl << "   ID: " << id << std::endl
-						<< "   Endpoint1: " << NormalizedIPString(clientAddr) << std::endl
-						<< "   Endpoint2: " << NormalizedIPString(other) << std::endl << std::endl;
-
-					current.erase(id);
-				}
-				else {
-					current.insert(std::make_pair(id, clientAddr));
-
-					std::cout << "Registered" << std::endl << "   ID: " << id << std::endl
-						<< "   Endpoint: " << NormalizedIPString(clientAddr) << std::endl << std::endl;
+				for (ClientNode* client : *clientIPList) {
+					if (client->getClient().sin_addr.S_un.S_addr == clientAddr.sin_addr.S_un.S_addr
+						&& client->getNodeID() == idByte.unsignedByte) {
+						client->setUpdateValue(val);
+						break;
+					}
 				}
 			}
-			catch (std::invalid_argument& e) {}
-			catch (std::out_of_range& e) {}
-			catch (...) {}
 		}
 
 		Sleep(1);
 	}
 
-	closesocket(serverSocket);
-	WSACleanup();
+	return 0;
 }

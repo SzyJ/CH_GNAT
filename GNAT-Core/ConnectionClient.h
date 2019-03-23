@@ -1,11 +1,6 @@
 #pragma once
 #include "pch.h"
 
-#define HIGHVERSION 2
-#define LOWVERSION 2
-#define SERVER_ADDR "127.0.0.1"
-#define SERVER_PORT 45000
-
 class ConnectionClinet {
 private:
 	SOCKET clientSocket;
@@ -19,5 +14,12 @@ public:
 
 	int initializeWinSock();
 	int connectToServer();
+	/*
+	 * Sends Join Request to server
+	 * 
+	 * returns: 
+	 *          The ID returned from the server if successful.
+	 *          Negative value otherwise
+	 */
 	int sendJoinRequest();
 };

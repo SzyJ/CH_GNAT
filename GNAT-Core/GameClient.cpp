@@ -6,7 +6,7 @@
 #include <thread>
 
 GameClient::GameClient() {
-
+	SetConsoleTitleA("Client");
 }
 
 GameClient::~GameClient() {
@@ -90,12 +90,12 @@ void GameClient::ListenForKeyboard() {
 	}
 }
 
-int GameClient::initializeWinsock() {
+int GameClient::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
 	if (WSAStartup(DllVersion, &wsaData) != 0) {
-		CLIENT_LOG_ERROR("Failed to initialise WinSock in connection server.");
+		CLIENT_LOG_ERROR("Failed to initialise WinSock in connection to game server.");
 		return WINSOCK_STARTUP_FAIL;
 	}
 
@@ -135,10 +135,8 @@ int GameClient::initializeWinsock() {
 }
 
 int GameClient::startClient() {
-	SetConsoleTitleA("Client");
+	//std::thread listenThread(ListenForKeyboard);
+	ListenForUpdates();
 
-	std::thread listenThread(&ListenForUpdates);
-
-	ListenForKeyboard();
-
+	return 0;
 }

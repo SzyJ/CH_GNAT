@@ -1,15 +1,22 @@
 #include "pch.h"
+#include "ClientNode.h"
 #include <string>
 
 class GameServer {
 private:
-	const int PORT = 54000;
 	SOCKET serverSocket;
-	std::map<int, SOCKADDR_IN> current;
+	SOCKADDR_IN serverHint;
 
-	std::string NormalizedIPString(SOCKADDR_IN addr);
-	void SendResponse(SOCKADDR_IN addr, SOCKADDR_IN receiver);
+	std::vector<ClientNode*>* clientIPList = NULL;
+
+	void startStateBroadcast();
 
 public:
+	GameServer();
+	~GameServer();
+
+	bool setClientList(std::vector<ClientNode*>* clientIPList);
+
+	int initializeWinSock();
 	int startServer();
 };

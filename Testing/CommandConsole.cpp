@@ -33,6 +33,7 @@ void host() {
 		std::cout << "[client : host] ";
 		std::cin >> cmd;
 
+		/*
 		if (cmd == "host") {
 			std::cout << "  Listening for Join Requests..." << std::endl;
 			server->openToClientConnection();
@@ -56,8 +57,11 @@ void host() {
 			}
 
 		}
-		else if (cmd == "conn") {
+		else*/
+		if (cmd == "conn") {
 			server->startConnectionServer();
+		} else if (cmd == "startgame") {
+			server->startGameServer();
 		}
 	}
 
@@ -73,6 +77,7 @@ void join() {
 		std::cout << "[client : join] ";
 		std::cin >> cmd;
 
+		/*
 		if (cmd == "join") {
 			std::cout << "  Sending join request..." << std::endl;
 			bool successful = client->sendJoinRequest();
@@ -107,8 +112,11 @@ void join() {
 				std::cout << "  Could not stop threads. Threads are not runnng!" << std::endl;
 			}
 
-		} else if (cmd == "conn") {
+		} else */
+		if (cmd == "conn") {
 			client->connectToServer();
+		} else if (cmd == "startgame") {
+			client->startGameServer();
 		}
 	}
 

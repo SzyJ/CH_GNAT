@@ -2,9 +2,12 @@
 #include "ErrorCodes.h"
 #include "ConnectionServer.h"
 #include "Messages.h"
+#include "ServerConfigs.h"
+#include "GameConfigs.h"
 
 ConnectionServer::ConnectionServer() {
-	clientIPList.reserve(4); // TODO: Implement some state holding for configurable client count
+	clientIPList = new std::vector<ClientNode*>();
+	clientIPList->reserve(TARGET_PLAYER_COUNT); // TODO: Implement some state holding for configurable client count
 }
 
 int ConnectionServer::initializeWinSock() {
@@ -40,7 +43,6 @@ int ConnectionServer::initializeWinSock() {
 	return STARTUP_SUCCESSFUL;
 }
 
-
 int ConnectionServer::establishTCPConnection() {
 	fd_set master;
 	FD_ZERO(&master);
@@ -48,7 +50,9 @@ int ConnectionServer::establishTCPConnection() {
 
 	std::map<SOCKET, SOCKADDR_IN> socketMap;
 
-	while(true) {
+	int clientCount = 0;
+
+	while(clientCount < TARGET_PLAYER_COUNT) {
 		fd_set copy = master;
 		int socketCount = select(0, &copy, nullptr, nullptr, nullptr);
 
@@ -104,7 +108,8 @@ int ConnectionServer::establishTCPConnection() {
 
 					if (socketMap.find(thisSock) != socketMap.end()) {
 						SERVER_LOG_INFO("Adding Client to list");
-						clientIPList.emplace_back(socketMap[thisSock]);	
+						clientIPList->emplace_back(new ClientNode(socketMap[thisSock]));	
+						++clientCount;
 					} else {
 						SERVER_LOG_INFO("Could not find clinet info, could not add client.");
 						// At this point the client doesnt know yet that they have not been added.
@@ -118,6 +123,9 @@ int ConnectionServer::establishTCPConnection() {
 		}
 	}
 
-
 	return 0;
+}
+
+std::vector<ClientNode*>* ConnectionServer::getClientList() {
+	return clientIPList;
 }

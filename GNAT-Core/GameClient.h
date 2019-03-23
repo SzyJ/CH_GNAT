@@ -27,6 +27,6 @@ public:
 	GameClient();
 	~GameClient();
 
-	int initializeWinsock();
+	int initializeWinSock();
 	int startClient();
 };
