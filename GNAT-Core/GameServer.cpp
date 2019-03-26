@@ -14,14 +14,35 @@ GameServer::~GameServer() {
 	WSACleanup();
 }
 
+std::string NormalizedIPString(SOCKADDR_IN addr) {
+	char host[16];
+	ZeroMemory(host, 16);
+	inet_ntop(AF_INET, &addr.sin_addr, host, 16);
+
+	USHORT port = ntohs(addr.sin_port);
+
+	int realLen = 0;
+	for (int i = 0; i < 16; i++) {
+		if (host[i] == '\00') {
+			break;
+		}
+		realLen++;
+	}
+
+	std::string res(host, realLen);
+	res += ":" + std::to_string(port);
+
+	return res;
+}
+
 void GameServer::startStateBroadcast() {
 	const int MAX_MSG_LENGTH = MESSAGE_LENGTH + (clientIPList->size() * 2);
 	char* updateMsg = new char[MAX_MSG_LENGTH];
-
+		 
 	while (true) {
 		int clientCount = clientIPList->size();
 		int thisMsgLength = MESSAGE_LENGTH + (clientCount * 2);
-		strcpy_s(updateMsg, MESSAGE_LENGTH, Messages::CURRENT_STATE);
+		memcpy(updateMsg, Messages::CURRENT_STATE, MESSAGE_LENGTH);
 
 		int clinetStepper = 0;
 		for (int i = MESSAGE_LENGTH; clinetStepper < clientCount; i += 2, ++clinetStepper) {
@@ -35,11 +56,47 @@ void GameServer::startStateBroadcast() {
 		}
 
 		// Broadcast Message
+		SERVER_LOG_INFO("Sending Message: " + std::string(updateMsg, thisMsgLength));
+
 		for (int i = 0; i < clientCount; ++i) {
+			SERVER_LOG_INFO("Sent-To: " + NormalizedIPString(clientIPList->at(i)->getClient()));
 			IP_Utils::sendMessage(serverSocket, clientIPList->at(i)->getClient(), updateMsg, thisMsgLength);
 		}
 
 		Sleep(SEND_DELAY);
+	}
+}
+
+void GameServer::startUpdateListen() {
+	const int BUFFER_LENGTH = 1024;
+	char buffer[BUFFER_LENGTH];
+
+	while (true) {
+		ZeroMemory(buffer, BUFFER_LENGTH);
+		SOCKADDR_IN clientAddr;
+		int clientSize = sizeof(clientAddr);
+
+		int bytesReceived = recvfrom(serverSocket, buffer, BUFFER_LENGTH, 0, (sockaddr*)&clientAddr, &clientSize);
+
+		if (bytesReceived > 0) {
+			SERVER_LOG_INFO("Message Received: " + std::string(buffer, bytesReceived));
+
+			if (bytesReceived >= MESSAGE_LENGTH + 2 &&
+				Messages::codesMatch(buffer, bytesReceived, Messages::UPDATE)) {
+				Messages::dataByte idByte(buffer[MESSAGE_LENGTH]);
+				char val(buffer[MESSAGE_LENGTH + 1]);
+
+				for (ClientNode* client : *clientIPList) {
+					if (client->getClient().sin_addr.S_un.S_addr == clientAddr.sin_addr.S_un.S_addr
+						&& client->getNodeID() == idByte.unsignedByte) {
+						client->setUpdateValue(val);
+						break;
+					}
+				}
+			}
+		}
+
+		Sleep(1);
 	}
 }
 
@@ -90,38 +147,9 @@ int GameServer::initializeWinSock() {
 }
 
 int GameServer::startServer() {
-	//std::thread stateUpdate(&startStateBroadcast);
+	//std::thread stateUpdate(&startUpdateListen);
 
-	const int BUFFER_LENGTH = 1024;
-	char buffer[BUFFER_LENGTH];
-
-	while (true) {
-		ZeroMemory(buffer, BUFFER_LENGTH);
-		SOCKADDR_IN clientAddr;
-		int clientSize = sizeof(clientAddr);
-
-		int bytesReceived = recvfrom(serverSocket, buffer, BUFFER_LENGTH, 0, (sockaddr*)&clientAddr, &clientSize);
-
-		if (bytesReceived > 0) {
-			SERVER_LOG_INFO("Message Received: " + std::string(buffer, bytesReceived));
-			
-			if (bytesReceived >= MESSAGE_LENGTH + 2 &&
-				Messages::codesMatch(buffer, bytesReceived, Messages::UPDATE)) {
-				Messages::dataByte idByte(buffer[MESSAGE_LENGTH]);
-				char val(buffer[MESSAGE_LENGTH + 1]);
-
-				for (ClientNode* client : *clientIPList) {
-					if (client->getClient().sin_addr.S_un.S_addr == clientAddr.sin_addr.S_un.S_addr
-						&& client->getNodeID() == idByte.unsignedByte) {
-						client->setUpdateValue(val);
-						break;
-					}
-				}
-			}
-		}
-
-		Sleep(1);
-	}
+	startStateBroadcast();
 
 	return 0;
 }

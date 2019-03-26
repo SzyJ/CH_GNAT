@@ -4,6 +4,7 @@
 #include "IPUtils.h"
 #include "Messages.h"
 #include <thread>
+#include "ServerConfigs.h"
 
 GameClient::GameClient() {
 	SetConsoleTitleA("Client");
@@ -13,7 +14,6 @@ GameClient::~GameClient() {
 	closesocket(clientSocket);
 	WSACleanup();
 }
-
 
 char GameClient::checkForUserInput() {
 	for (int i = 0; i < 10; ++i) {
@@ -56,6 +56,7 @@ void GameClient::ListenForUpdates() {
 
 		if (bytesReceived > 0) {
 			// Update Values
+			CLIENT_LOG_INFO("Received message: " + std::string(msgBuffer, bytesReceived));
 		} else {
 			CLIENT_LOG_ERROR("The connection to the server has been lost.");
 		}
@@ -109,9 +110,9 @@ int GameClient::initializeWinSock() {
 
 	// Define Server Info
 	ZeroMemory(&serverHint, sizeof(serverHint));
-	serverHint.sin_port = htons(SERVER_PORT);
+	serverHint.sin_port = htons(PORT);
 	serverHint.sin_family = AF_INET;
-	inet_pton(AF_INET, SERVER_ADDR, &serverHint.sin_addr);
+	inet_pton(AF_INET, ADDRESS, &serverHint.sin_addr);
 
 	// Define Client Info
 	int clientSize = sizeof(clientHint);
@@ -131,6 +132,10 @@ int GameClient::initializeWinSock() {
 	int val = 64 * 1024;
 	setsockopt(clientSocket, SOL_SOCKET, SO_SNDBUF, (char*)&val, sizeof(val));
 	
+	listen(clientSocket, SOMAXCONN);
+
+	SetConsoleTitleA(("Client[" + std::to_string(clientHint.sin_port) + "]").c_str());
+
 	return STARTUP_SUCCESSFUL;
 }
 

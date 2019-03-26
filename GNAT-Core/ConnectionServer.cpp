@@ -72,8 +72,7 @@ int ConnectionServer::establishTCPConnection() {
 
 				// Send msg on join?
 				SERVER_LOG_INFO("Clinet Has Connected!");
-			}
-			else {
+			} else {
 				// Accept new Message
 				const int BUFFER_SIZE = 1024;
 				char msgBuffer[BUFFER_SIZE];
@@ -108,7 +107,9 @@ int ConnectionServer::establishTCPConnection() {
 
 					if (socketMap.find(thisSock) != socketMap.end()) {
 						SERVER_LOG_INFO("Adding Client to list");
-						clientIPList->emplace_back(new ClientNode(socketMap[thisSock]));	
+						ClientNode* node = new ClientNode(socketMap[thisSock]);
+						node->setUpdateValue('0');
+						clientIPList->emplace_back(node);
 						++clientCount;
 					} else {
 						SERVER_LOG_INFO("Could not find clinet info, could not add client.");

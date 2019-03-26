@@ -10,6 +10,7 @@ private:
 	std::vector<ClientNode*>* clientIPList = NULL;
 
 	void startStateBroadcast();
+	void startUpdateListen();
 
 public:
 	GameServer();

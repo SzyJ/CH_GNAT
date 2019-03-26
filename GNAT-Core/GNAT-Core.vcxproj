@@ -43,12 +43,14 @@
     <ClInclude Include="ConnectionClient.h" />
     <ClInclude Include="ConnectionServer.h" />
     <ClInclude Include="ErrorCodes.h" />
+    <ClInclude Include="GameConfigs.h" />
     <ClInclude Include="GameServer.h" />
     <ClInclude Include="IPUtils.h" />
     <ClInclude Include="log.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Server.h" />
+    <ClInclude Include="ServerConfigs.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

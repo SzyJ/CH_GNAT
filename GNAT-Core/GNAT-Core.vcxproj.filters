@@ -19,6 +19,9 @@
     <Filter Include="Source Files\Utils">
       <UniqueIdentifier>{baf534e0-a145-423c-a184-ef0652d28d7c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Configs">
+      <UniqueIdentifier>{816c912a-c562-4b06-a5e1-3f0d7f68f3bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Server.cpp">
@@ -91,6 +94,12 @@
     </ClInclude>
     <ClInclude Include="GameServer.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameConfigs.h">
+      <Filter>Header Files\Configs</Filter>
+    </ClInclude>
+    <ClInclude Include="ServerConfigs.h">
+      <Filter>Header Files\Configs</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

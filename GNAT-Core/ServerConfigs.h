@@ -5,7 +5,7 @@
 #define LOWVERSION 2
 
 // Server Attributes
-#define HOST "127.0.0.1"
+#define ADDRESS "127.0.0.1"
 #define PORT 45000
 
 // State Broadcast Rate

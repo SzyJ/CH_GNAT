@@ -1,8 +1,9 @@
 #pragma once
 #include "pch.h"
 #include "ErrorCodes.h"
-#include "ConnectionCLient.h"
+#include "ConnectionClient.h"
 #include "Messages.h"
+#include "ServerConfigs.h"
 
 ConnectionClinet::ConnectionClinet() {
 
@@ -32,10 +33,9 @@ int ConnectionClinet::initializeWinSock() {
 
 	// Define Server Info
 	ZeroMemory(&hint, sizeof(hint));
-	hint.sin_port = htons(SERVER_PORT);
+	hint.sin_port = htons(PORT);
 	hint.sin_family = AF_INET;
-	inet_pton(AF_INET, SERVER_ADDR, &hint.sin_addr);
-
+	inet_pton(AF_INET, ADDRESS, &hint.sin_addr);
 
 	listen(clientSocket, SOMAXCONN);
 
