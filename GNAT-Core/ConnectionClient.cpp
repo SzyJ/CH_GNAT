@@ -55,7 +55,12 @@ int ConnectionClinet::connectToServer() {
 	return CONNECTION_ESTABLISHED;
 }
 
-int ConnectionClinet::sendJoinRequest() {
+int ConnectionClinet::sendJoinRequest(u_short udpPort) {
+	std::string port = std::to_string(udpPort);
+	const int PORT_STRING_LENGTH = port.length();
+
+	CLIENT_LOG_INFO("UDP PORT: " + port);
+
 	if (!connectionEstablished) {
 		CLIENT_LOG_ERROR("Attempting to send message without establishing connection...");
 		return NOT_CONNECTED_TO_SERVER;
@@ -64,9 +69,10 @@ int ConnectionClinet::sendJoinRequest() {
 	const int RECEIVE_BUFFER_SIZE = 1024;
 	char receiveBuffer[RECEIVE_BUFFER_SIZE];
 
-	const int JOIN_MESSAGE_LENGTH = MESSAGE_LENGTH;
-	char joinMessageBuffer[JOIN_MESSAGE_LENGTH];
+	const int JOIN_MESSAGE_LENGTH = MESSAGE_LENGTH + PORT_STRING_LENGTH;
+	char* joinMessageBuffer = new char[JOIN_MESSAGE_LENGTH];
 	memcpy(joinMessageBuffer, Messages::JOIN_REQ, MESSAGE_LENGTH);
+	memcpy(joinMessageBuffer + MESSAGE_LENGTH, port.c_str(), PORT_STRING_LENGTH);
 
 	int bytesSent = send(clientSocket, joinMessageBuffer, JOIN_MESSAGE_LENGTH, 0);
 	if (bytesSent < JOIN_MESSAGE_LENGTH) {

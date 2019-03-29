@@ -10,6 +10,28 @@ ConnectionServer::ConnectionServer() {
 	clientIPList->reserve(TARGET_PLAYER_COUNT); // TODO: Implement some state holding for configurable client count
 }
 
+std::string NormalizedIPStringTest(SOCKADDR_IN addr) {
+	char host[16];
+	ZeroMemory(host, 16);
+	inet_ntop(AF_INET, &addr.sin_addr, host, 16);
+
+	USHORT port = ntohs(addr.sin_port);
+
+	int realLen = 0;
+	for (int i = 0; i < 16; i++) {
+		if (host[i] == '\00') {
+			break;
+		}
+		realLen++;
+	}
+
+	std::string res(host, realLen);
+	res += ":" + std::to_string(port);
+
+	return res;
+}
+
+
 int ConnectionServer::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
@@ -71,7 +93,16 @@ int ConnectionServer::establishTCPConnection() {
 				socketMap.insert(std::pair<SOCKET, SOCKADDR_IN>(client, clientInfo));
 
 				// Send msg on join?
-				SERVER_LOG_INFO("Clinet Has Connected!");
+				SERVER_LOG_INFO("Clinet Has Connected! Size: " + std::to_string(socketMap.size()));
+				
+
+				std::map<SOCKET, SOCKADDR_IN>::iterator it;
+
+				for (it = socketMap.begin(); it != socketMap.end(); it++)
+				{
+					SERVER_LOG_INFO("Item: " + NormalizedIPStringTest(it->second));
+				}
+
 			} else {
 				// Accept new Message
 				const int BUFFER_SIZE = 1024;
@@ -90,6 +121,10 @@ int ConnectionServer::establishTCPConnection() {
 				SERVER_LOG_INFO("Received Msg [" + std::to_string(msgLength) + " bytes]: " + std::string(msgBuffer, msgLength));
 
 				if (Messages::codesMatch(msgBuffer, msgLength, Messages::JOIN_REQ)) {
+					
+					std::string udpPortString(msgBuffer + MESSAGE_LENGTH, msgLength - MESSAGE_LENGTH);
+					USHORT udpPort = atoi(udpPortString.c_str());
+
 					// Construct Message
 					const int ACK_MSG_LEN = MESSAGE_LENGTH + ID_LENGTH;
 					char joinAckMsg[ACK_MSG_LEN];
@@ -106,7 +141,8 @@ int ConnectionServer::establishTCPConnection() {
 					}
 
 					if (socketMap.find(thisSock) != socketMap.end()) {
-						SERVER_LOG_INFO("Adding Client to list");
+						SERVER_LOG_INFO("Adding Client to list: " + NormalizedIPStringTest(socketMap[thisSock]));
+						socketMap[thisSock].sin_port = udpPort;
 						ClientNode* node = new ClientNode(socketMap[thisSock]);
 						node->setUpdateValue('0');
 						clientIPList->emplace_back(node);

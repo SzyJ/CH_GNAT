@@ -21,5 +21,5 @@ public:
 	 *          The ID returned from the server if successful.
 	 *          Negative value otherwise
 	 */
-	int sendJoinRequest();
+	int sendJoinRequest(u_short udpPort);
 };

@@ -2,8 +2,6 @@
 #include "Client.h"
 #include "IPUtils.h"
 #include "Messages.h"
-#include "ConnectionClient.h"
-#include "GameClient.h"
 
 namespace GNAT {
     Client::Client() {
@@ -19,12 +17,22 @@ namespace GNAT {
 			GNAT_Log::init_client();
 			logInitialised = true;
 		}
+		int udpPort = 0;
+
+		gameClient = new GameClient();
+		udpPort = gameClient->initializeWinSock();
+
+		if (udpPort < 0) {
+			CLIENT_LOG_ERROR("Failed to initialise UDP");
+			return false;
+		}
+
 		ConnectionClinet* conn = new ConnectionClinet();
 		int success = 0;
 
 		success = conn->initializeWinSock();
 		if (success < 0) {
-			CLIENT_LOG_ERROR("Failed to initialise");
+			CLIENT_LOG_ERROR("Failed to initialise TCP");
 			return false;
 		}
 
@@ -34,7 +42,7 @@ namespace GNAT {
 			return false;
 		}
 
-		success = conn->sendJoinRequest();
+		success = conn->sendJoinRequest((u_short) udpPort);
 		if (success < 0) {
 			CLIENT_LOG_ERROR("Failed to receive: " + std::to_string(success));
 			return false;
@@ -42,6 +50,7 @@ namespace GNAT {
 
 		CLIENT_LOG_INFO("Successfully joined with ID: " + std::to_string(success));
 
+		connectionCompleted = true;
 		delete conn;
 		return true;
 	}
@@ -51,23 +60,21 @@ namespace GNAT {
 			GNAT_Log::init_client();
 			logInitialised = true;
 		}
-		GameClient* client = new GameClient();
-		int success = 0;
-
-
-		success = client->initializeWinSock();
-		if (success < 0) {
-			CLIENT_LOG_ERROR("Failed to initialise");
-			return false;
+		if (!connectionCompleted || gameClient == NULL) {
+			CLIENT_LOG_INFO("Can not start game without connection first.");
 		}
 
-		success = client->startClient();
+		
+		int success = 0;
+
+		success = gameClient->startClient();
 		if (success < 0) {
 			CLIENT_LOG_ERROR("Failed to start game client");
 			return false;
 		}
 
-		delete client;
+		connectionCompleted = false;
+		delete gameClient;
 		return true;
 	}
 

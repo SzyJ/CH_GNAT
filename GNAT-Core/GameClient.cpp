@@ -134,9 +134,15 @@ int GameClient::initializeWinSock() {
 	
 	listen(clientSocket, SOMAXCONN);
 
-	SetConsoleTitleA(("Client[" + std::to_string(clientHint.sin_port) + "]").c_str());
+	struct sockaddr_in sin;
+	socklen_t len = sizeof(sin);
+	if (getsockname(clientSocket, (struct sockaddr *)&sin, &len) == -1) {
+		return GETTING_PORT_FAILED;
+	}
 
-	return STARTUP_SUCCESSFUL;
+	SetConsoleTitleA(("Client[" + std::to_string(ntohs(sin.sin_port)) + "]").c_str());
+
+	return sin.sin_port;
 }
 
 int GameClient::startClient() {
