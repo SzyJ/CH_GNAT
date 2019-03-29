@@ -1,4 +1,4 @@
-# CH_GNAT
+# GNAT_Core
 Client Hosted Model - Game Networking API Template
 
 ## To clone
