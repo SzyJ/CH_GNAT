@@ -101,7 +101,7 @@ void GameServer::startUpdateListen() {
 }
 
 bool GameServer::setClientList(std::vector<ClientNode*>* clientIPList) {
-	bool overriden = this->clientIPList != NULL;
+	bool overriden = this->clientIPList != NULL && clientIPList != NULL;
 	this->clientIPList = clientIPList;
 	return overriden;
 }

@@ -1,13 +1,13 @@
+#pragma once
 #include "pch.h"
 #include "ClientNode.h"
 
-class GameClient {
+class GamePeer {
 private:
 	// Winsock Values
-	SOCKET clientSocket;
-	SOCKADDR_IN serverHint;
-	SOCKADDR_IN clientHint;
-	
+	SOCKET peerSocket;
+	SOCKADDR_IN peerHint;
+
 	// Other Peers
 	std::vector<ClientNode*>* clientIPList = NULL;
 
@@ -16,15 +16,15 @@ private:
 
 	// Helpers
 	char checkForUserInput();
-	bool sendToServer(const char* message, const int messageLen, const char* onErrorMsg = nullptr);
+	bool sendToPeers(const char* message, const int messageLen, const char* onErrorMsg = nullptr);
 
 	// Thread Loop
 	void ListenForUpdates();
 	void ListenForKeyboard();
 
 public:
-	GameClient();
-	~GameClient();
+	GamePeer();
+	~GamePeer();
 
 	int initializeWinSock();
 	int startClient();
