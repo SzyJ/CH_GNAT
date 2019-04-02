@@ -89,6 +89,7 @@ void GameServer::startUpdateListen() {
 				for (ClientNode* client : *clientIPList) {
 					if (client->getClient().sin_addr.S_un.S_addr == clientAddr.sin_addr.S_un.S_addr
 						&& client->getNodeID() == idByte.unsignedByte) {
+						SERVER_LOG_INFO("Updating ID " + std::to_string((char) idByte.unsignedByte) + " value to: " + std::to_string(val));
 						client->setUpdateValue(val);
 						break;
 					}
@@ -147,8 +148,7 @@ int GameServer::initializeWinSock() {
 }
 
 int GameServer::startServer() {
-	//std::thread stateUpdate(&startUpdateListen);
-
+	std::thread stateUpdate([=] { startUpdateListen(); });
 	startStateBroadcast();
 
 	return 0;

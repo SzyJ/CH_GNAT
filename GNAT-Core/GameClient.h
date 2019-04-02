@@ -13,6 +13,7 @@ private:
 
 	// State
 	char thisVal;
+	byte thisID = 0;
 
 	// Helpers
 	char checkForUserInput();
@@ -28,4 +29,7 @@ public:
 
 	int initializeWinSock();
 	int startClient();
+
+	byte getID();
+	void setID(byte newID);
 };

@@ -102,5 +102,5 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 
 	Messages::dataByte clientID(receiveBuffer[MESSAGE_LENGTH]);
 	CLIENT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID.unsignedByte));
-	return (int)clientID.unsignedByte;
+	return (int) clientID.unsignedByte;
 }

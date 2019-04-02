@@ -47,7 +47,7 @@ namespace GNAT {
 			CLIENT_LOG_ERROR("Failed to receive: " + std::to_string(success));
 			return false;
 		}
-
+		thisID = (byte) success;
 		CLIENT_LOG_INFO("Successfully joined with ID: " + std::to_string(success));
 
 		connectionCompleted = true;
@@ -62,10 +62,11 @@ namespace GNAT {
 		}
 		if (!connectionCompleted || gameClient == NULL) {
 			CLIENT_LOG_INFO("Can not start game without connection first.");
+			return false;
 		}
-
-		
 		int success = 0;
+
+		gameClient->setID(thisID);
 
 		success = gameClient->startClient();
 		if (success < 0) {

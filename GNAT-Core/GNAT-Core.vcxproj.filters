@@ -60,6 +60,9 @@
     <ClCompile Include="GameServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GamePeer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server.h">
@@ -100,6 +103,12 @@
     </ClInclude>
     <ClInclude Include="ServerConfigs.h">
       <Filter>Header Files\Configs</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePeer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Peer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -78,10 +78,11 @@ void GameClient::ListenForKeyboard() {
 			continue;
 		}
 
-		const int thisMsgLength = MESSAGE_LENGTH + 1;
+		const int thisMsgLength = MESSAGE_LENGTH + 2;
 		char message[thisMsgLength];
 		memcpy(message, Messages::UPDATE, MESSAGE_LENGTH);
-		message[MESSAGE_LENGTH] = validKeycodeUpdate;
+		message[MESSAGE_LENGTH] = Messages::dataByte(thisID).signedByte;
+		message[MESSAGE_LENGTH + 1] = validKeycodeUpdate;
 
 		sendToServer(message, thisMsgLength);
 
@@ -146,8 +147,21 @@ int GameClient::initializeWinSock() {
 }
 
 int GameClient::startClient() {
-	//std::thread listenThread(ListenForKeyboard);
+	if (thisID == 0) {
+		CLIENT_LOG_ERROR("Invalid client ID provided. Aborting...");
+		return INVALID_CLIENT_ID;
+	}
+	std::thread listenThread([=] { ListenForKeyboard(); });
 	ListenForUpdates();
 
 	return 0;
+}
+
+
+byte GameClient::getID() {
+	return thisID;
+}
+
+void GameClient::setID(byte newID) {
+	thisID = newID;
 }
