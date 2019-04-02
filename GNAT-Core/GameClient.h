@@ -12,7 +12,6 @@ private:
 	std::vector<ClientNode*>* clientIPList = NULL;
 
 	// State
-	char thisVal;
 	byte thisID = 0;
 
 	// Helpers

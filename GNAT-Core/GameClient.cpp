@@ -16,6 +16,11 @@ GameClient::~GameClient() {
 }
 
 char GameClient::checkForUserInput() {
+	bool isConsoleWindowFocussed = (GetConsoleWindow() == GetForegroundWindow());
+	if (!isConsoleWindowFocussed) {
+		return NULL;
+	}
+
 	for (int i = 0; i < 10; ++i) {
 		if (GetAsyncKeyState(0x30 + i)) {
 			return '0' + i;
@@ -31,8 +36,7 @@ bool GameClient::sendToServer(const char* message, const int messageLen, const c
 	if (bytesSent != messageLen) {
 		if (onErrorMsg != nullptr) {
 			CLIENT_LOG_ERROR(onErrorMsg);
-		}
-		else {
+		} else {
 			CLIENT_LOG_ERROR("Failed to send message to server: " + std::string(message, messageLen));
 		}
 		return false;
@@ -69,12 +73,13 @@ void GameClient::ListenForKeyboard() {
 	// Listen for keyboard input and send update to server
 	char validKeycodeUpdate = NULL;
 
+	using namespace std::literals::chrono_literals;
+
 	while (true) {
 		validKeycodeUpdate = checkForUserInput();
 
-		if (validKeycodeUpdate == NULL ||
-			validKeycodeUpdate == thisVal) {
-			Sleep(1);
+		if (validKeycodeUpdate == NULL) {
+			std::this_thread::sleep_for(0.5s);
 			continue;
 		}
 
@@ -88,7 +93,7 @@ void GameClient::ListenForKeyboard() {
 
 		validKeycodeUpdate = NULL;
 
-		Sleep(1);
+		std::this_thread::sleep_for(1s);
 	}
 }
 
@@ -151,7 +156,7 @@ int GameClient::startClient() {
 		CLIENT_LOG_ERROR("Invalid client ID provided. Aborting...");
 		return INVALID_CLIENT_ID;
 	}
-	std::thread listenThread([=] { ListenForKeyboard(); });
+	std::thread listenThread([=	] { ListenForKeyboard(); });
 	ListenForUpdates();
 
 	return 0;
