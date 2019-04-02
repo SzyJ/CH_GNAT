@@ -13,6 +13,7 @@ private:
 
 	// State
 	byte thisID = 0;
+	bool threadsRunning = false;
 
 	// Helpers
 	char checkForUserInput();

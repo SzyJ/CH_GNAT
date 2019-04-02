@@ -39,7 +39,7 @@ void GameServer::startStateBroadcast() {
 	const int MAX_MSG_LENGTH = MESSAGE_LENGTH + (clientIPList->size() * 2);
 	char* updateMsg = new char[MAX_MSG_LENGTH];
 		 
-	while (true) {
+	while (threadsRunning) {
 		int clientCount = clientIPList->size();
 		int thisMsgLength = MESSAGE_LENGTH + (clientCount * 2);
 		memcpy(updateMsg, Messages::CURRENT_STATE, MESSAGE_LENGTH);
@@ -71,7 +71,7 @@ void GameServer::startUpdateListen() {
 	const int BUFFER_LENGTH = 1024;
 	char buffer[BUFFER_LENGTH];
 
-	while (true) {
+	while (threadsRunning) {
 		ZeroMemory(buffer, BUFFER_LENGTH);
 		SOCKADDR_IN clientAddr;
 		int clientSize = sizeof(clientAddr);
@@ -148,8 +148,18 @@ int GameServer::initializeWinSock() {
 }
 
 int GameServer::startServer() {
-	std::thread stateUpdate([=] { startUpdateListen(); });
-	startStateBroadcast();
+	threadsRunning = true;
+
+	std::thread updateListen([=] { startUpdateListen(); });
+	std::thread stateBroadcast([=] { startStateBroadcast(); });
+
+	while (std::cin.get() != 27);
+
+	threadsRunning = false;
+	CLIENT_LOG_INFO("Waiting for threads to finish.");
+	updateListen.join();
+	stateBroadcast.join();
+	CLIENT_LOG_INFO("Threads successfully closed.");
 
 	return 0;
 }

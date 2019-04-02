@@ -52,7 +52,7 @@ void GameClient::ListenForUpdates() {
 	const int BUFFER_SIZE = 1024;
 	char msgBuffer[BUFFER_SIZE];
 
-	while (true) {
+	while (threadsRunning) {
 		SOCKADDR_IN remoteAddr;
 		int	remoteAddrLen = sizeof(remoteAddr);
 
@@ -75,7 +75,7 @@ void GameClient::ListenForKeyboard() {
 
 	using namespace std::literals::chrono_literals;
 
-	while (true) {
+	while (threadsRunning) {
 		validKeycodeUpdate = checkForUserInput();
 
 		if (validKeycodeUpdate == NULL) {
@@ -156,8 +156,19 @@ int GameClient::startClient() {
 		CLIENT_LOG_ERROR("Invalid client ID provided. Aborting...");
 		return INVALID_CLIENT_ID;
 	}
-	std::thread listenThread([=	] { ListenForKeyboard(); });
-	ListenForUpdates();
+
+	threadsRunning = true;
+
+	std::thread updateThread([=] { ListenForKeyboard(); });
+	std::thread listenThread([=] { ListenForUpdates(); });
+
+	while (std::cin.get() != 27);
+
+	threadsRunning = false;
+	CLIENT_LOG_INFO("Waiting for threads to finish.");
+	updateThread.join();
+	listenThread.join();
+	CLIENT_LOG_INFO("Threads successfully closed.");
 
 	return 0;
 }

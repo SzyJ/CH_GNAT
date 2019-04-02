@@ -9,6 +9,8 @@ private:
 
 	std::vector<ClientNode*>* clientIPList = NULL;
 
+	bool threadsRunning = false;
+
 	void startStateBroadcast();
 	void startUpdateListen();
 
