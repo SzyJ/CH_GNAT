@@ -28,7 +28,7 @@ char GamePeer::checkForUserInput() {
 bool GamePeer::sendToPeers(const char* message, const int messageLen, const char* onErrorMsg) {
 	PEER_LOG_INFO("Sending message to Peers: " + std::string(message, messageLen));
 
-	for (ClientNode* node : *clientIPList) {
+	for (ClientNode* node : *peerIPList) {
 		int bytesSent = IP_Utils::sendMessage(peerSocket, node->getClient(), message, messageLen);
 		if (bytesSent != messageLen) {
 			if (onErrorMsg != nullptr) {

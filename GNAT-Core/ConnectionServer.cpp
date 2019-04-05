@@ -163,6 +163,15 @@ int ConnectionServer::establishTCPConnection() {
 	return 0;
 }
 
+int ConnectionServer::broadcastClientState() {
+	const int CLIENT_COUNT = clientIPList->size();
+	if (CLIENT_COUNT == 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
 	return clientIPList;
 }

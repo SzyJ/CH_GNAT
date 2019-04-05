@@ -9,7 +9,7 @@ private:
 	SOCKADDR_IN peerHint;
 
 	// Other Peers
-	std::vector<ClientNode*>* clientIPList = NULL;
+	std::vector<ClientNode*>* peerIPList = NULL;
 
 	// State
 	char thisVal;
