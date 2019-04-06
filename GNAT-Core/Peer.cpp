@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Peer.h"
 
 namespace GNAT {
@@ -14,7 +15,9 @@ namespace GNAT {
 			GNAT_Log::init_peer();
 			logInitialised = true;
 		}
-		// Start a new instance of ConnectionPeer
+		// Start a new instance of Connection Peer
+
+		return false;
 	}
 
 	bool Peer::openAsSessionHost() {
@@ -23,6 +26,8 @@ namespace GNAT {
 			logInitialised = true;
 		}
 		// Start new instance of Connection Server
+
+		return false;
 	}
 
 	bool Peer::startP2PGame() {
@@ -31,5 +36,7 @@ namespace GNAT {
 			logInitialised = true;
 		}
 		// Start an instance of Game Peer
+
+		return false;
 	}
 }

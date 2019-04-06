@@ -6,8 +6,10 @@
 #include "GameConfigs.h"
 
 ConnectionServer::ConnectionServer() {
+	GNAT::GNAT_Log::init_connection();
+
 	clientIPList = new std::vector<ClientNode*>();
-	clientIPList->reserve(TARGET_PLAYER_COUNT); // TODO: Implement some state holding for configurable client count
+	clientIPList->reserve(TARGET_PLAYER_COUNT);
 }
 
 std::string NormalizedIPStringTest(SOCKADDR_IN addr) {
@@ -37,14 +39,14 @@ int ConnectionServer::initializeWinSock() {
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
 	if (WSAStartup(DllVersion, &wsaData) != 0) {
-		SERVER_LOG_ERROR("Failed to initialise WinSock in connection server.");
+		CONNECT_LOG_ERROR("Failed to initialise WinSock in connection server.");
 		return WINSOCK_STARTUP_FAIL;
 	}
 
 	// Create Socket
 	listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (listenSock < 0) {
-		SERVER_LOG_ERROR("A socket could not be created. Aborting...");
+		CONNECT_LOG_ERROR("A socket could not be created. Aborting...");
 		return SOCKET_CREATION_FAIL;
 	}
 
@@ -56,7 +58,7 @@ int ConnectionServer::initializeWinSock() {
 
 	// Bind
 	if (bind(listenSock, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
-		SERVER_LOG_ERROR("Failed to bind socket. Aborting...");
+		CONNECT_LOG_ERROR("Failed to bind socket. Aborting...");
 		return BINDING_SOCKET_FAIL;
 	}
 
@@ -93,14 +95,14 @@ int ConnectionServer::establishTCPConnection() {
 				socketMap.insert(std::pair<SOCKET, SOCKADDR_IN>(client, clientInfo));
 
 				// Send msg on join?
-				SERVER_LOG_INFO("Clinet Has Connected! Size: " + std::to_string(socketMap.size()));
+				CONNECT_LOG_INFO("Clinet Has Connected! Size: " + std::to_string(socketMap.size()));
 				
 
 				std::map<SOCKET, SOCKADDR_IN>::iterator it;
 
 				for (it = socketMap.begin(); it != socketMap.end(); it++)
 				{
-					SERVER_LOG_INFO("Item: " + NormalizedIPStringTest(it->second));
+					CONNECT_LOG_INFO("Item: " + NormalizedIPStringTest(it->second));
 				}
 
 			} else {
@@ -110,7 +112,7 @@ int ConnectionServer::establishTCPConnection() {
 
 				int msgLength = recv(thisSock, msgBuffer, BUFFER_SIZE, 0);
 				if (msgLength <= 0) {
-					SERVER_LOG_INFO("Removing socket.");
+					CONNECT_LOG_INFO("Removing socket.");
 					closesocket(thisSock);
 					FD_CLR(thisSock, &master);
 					continue;
@@ -118,7 +120,7 @@ int ConnectionServer::establishTCPConnection() {
 					continue;
 				}
 
-				SERVER_LOG_INFO("Received Msg [" + std::to_string(msgLength) + " bytes]: " + std::string(msgBuffer, msgLength));
+				CONNECT_LOG_INFO("Received Msg [" + std::to_string(msgLength) + " bytes]: " + std::string(msgBuffer, msgLength));
 
 				if (Messages::codesMatch(msgBuffer, msgLength, Messages::JOIN_REQ)) {
 					
@@ -132,28 +134,28 @@ int ConnectionServer::establishTCPConnection() {
 					Messages::dataByte thisClientsID(ClientNode::getNextNodeID());
 					joinAckMsg[MESSAGE_LENGTH] = thisClientsID.signedByte;
 
-					SERVER_LOG_INFO("Sending Ack Message");
+					CONNECT_LOG_INFO("Sending Ack Message");
 					int bytesSent = send(thisSock, joinAckMsg, ACK_MSG_LEN, 0);
-					SERVER_LOG_INFO("Sent " + std::to_string(bytesSent) + " bytes.");
+					CONNECT_LOG_INFO("Sent " + std::to_string(bytesSent) + " bytes.");
 					if (bytesSent != ACK_MSG_LEN) {
-						SERVER_LOG_ERROR("Failed to send the Join Ack Message. The cient has not been added.");
+						CONNECT_LOG_ERROR("Failed to send the Join Ack Message. The cient has not been added.");
 						continue;
 					}
 
 					if (socketMap.find(thisSock) != socketMap.end()) {
-						SERVER_LOG_INFO("Adding Client to list: " + NormalizedIPStringTest(socketMap[thisSock]));
+						CONNECT_LOG_INFO("Adding Client to list: " + NormalizedIPStringTest(socketMap[thisSock]));
 						socketMap[thisSock].sin_port = udpPort;
 						ClientNode* node = new ClientNode(socketMap[thisSock]);
 						node->setUpdateValue('0');
 						clientIPList->emplace_back(node);
 						++clientCount;
 					} else {
-						SERVER_LOG_INFO("Could not find clinet info, could not add client.");
+						CONNECT_LOG_INFO("Could not find clinet info, could not add client.");
 						// At this point the client doesnt know yet that they have not been added.
 					}
 
 				} else if (Messages::codesMatch(msgBuffer, msgLength, Messages::EXIT)) {
-					SERVER_LOG_INFO("Exit Message Received");
+					CONNECT_LOG_INFO("Exit Message Received");
 					// Not implemented
 				}
 			}

@@ -13,10 +13,6 @@ namespace GNAT {
     }
 
 	bool Client::connectToServer() {
-		if (!logInitialised) {
-			GNAT_Log::init_client();
-			logInitialised = true;
-		}
 		int udpPort = 0;
 
 		gameClient = new GameClient();
@@ -56,10 +52,6 @@ namespace GNAT {
 	}
 
 	bool Client::startGameServer() {
-		if (!logInitialised) {
-			GNAT_Log::init_client();
-			logInitialised = true;
-		}
 		if (!connectionCompleted || gameClient == NULL) {
 			CLIENT_LOG_INFO("Can not start game without connection first.");
 			return false;

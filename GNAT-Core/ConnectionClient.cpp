@@ -6,7 +6,7 @@
 #include "ServerConfigs.h"
 
 ConnectionClinet::ConnectionClinet() {
-
+	GNAT::GNAT_Log::init_connection();
 }
 
 ConnectionClinet::~ConnectionClinet() {
@@ -19,14 +19,14 @@ int ConnectionClinet::initializeWinSock() {
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
 	if (WSAStartup(DllVersion, &wsaData) != 0) {
-		CLIENT_LOG_ERROR("Failed to initialise WinSock in connection server.");
+		CONNECT_LOG_ERROR("Failed to initialise WinSock in connection client.");
 		return WINSOCK_STARTUP_FAIL;
 	}
 
 	// Create Socket
 	clientSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (clientSocket < 0) {
-		CLIENT_LOG_ERROR("A socket could not be created. Aborting...");
+		CONNECT_LOG_ERROR("A socket could not be created. Aborting...");
 		WSACleanup();
 		return SOCKET_CREATION_FAIL;
 	}
@@ -44,7 +44,7 @@ int ConnectionClinet::initializeWinSock() {
 
 int ConnectionClinet::connectToServer() {
 	if (connect(clientSocket, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
-		CLIENT_LOG_ERROR("Failed to connect to the server, Aborting!");
+		CONNECT_LOG_ERROR("Failed to connect to the server, Aborting!");
 		closesocket(clientSocket);
 		WSACleanup();
 		return FAILED_TO_CONNECT_TO_SERVER;
@@ -59,10 +59,10 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 	std::string port = std::to_string(udpPort);
 	const int PORT_STRING_LENGTH = port.length();
 
-	CLIENT_LOG_INFO("UDP PORT: " + port);
+	CONNECT_LOG_INFO("UDP PORT: " + port);
 
 	if (!connectionEstablished) {
-		CLIENT_LOG_ERROR("Attempting to send message without establishing connection...");
+		CONNECT_LOG_ERROR("Attempting to send message without establishing connection...");
 		return NOT_CONNECTED_TO_SERVER;
 	}
 
@@ -76,7 +76,7 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 
 	int bytesSent = send(clientSocket, joinMessageBuffer, JOIN_MESSAGE_LENGTH, 0);
 	if (bytesSent < JOIN_MESSAGE_LENGTH) {
-		CLIENT_LOG_ERROR("Failed to send Join Message to server...");
+		CONNECT_LOG_ERROR("Failed to send Join Message to server...");
 		return FAILED_TO_SEND_MESSAGE;
 	}
 
@@ -88,7 +88,7 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 		bytesReceived = recv(clientSocket, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
 
 		if (bytesReceived > 0) {
-			CLIENT_LOG_INFO("MSG [" + std::to_string(bytesReceived) + " bytes]: " + std::string(receiveBuffer, bytesReceived));
+			CONNECT_LOG_INFO("MSG [" + std::to_string(bytesReceived) + " bytes]: " + std::string(receiveBuffer, bytesReceived));
 			response = true;
 		} else {
 			Sleep(5);
@@ -96,11 +96,11 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 	}
 
 	if (!Messages::codesMatch(receiveBuffer, bytesReceived, Messages::JOIN_ACC)) {
-		CLIENT_LOG_INFO("Unexpected message received");
+		CONNECT_LOG_INFO("Unexpected message received");
 		return UNEXPECTED_MESSAGE;
 	}
 
 	Messages::dataByte clientID(receiveBuffer[MESSAGE_LENGTH]);
-	CLIENT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID.unsignedByte));
+	CONNECT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID.unsignedByte));
 	return (int) clientID.unsignedByte;
 }
