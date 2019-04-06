@@ -1,3 +1,4 @@
+![GNAT_Banner](Images/GNAT_Banner.jpg)
 # GNAT_Core
 Client Hosted Model - Game Networking API Template
 
