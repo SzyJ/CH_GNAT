@@ -69,7 +69,7 @@ namespace GNAT {
 
 		try
 		{
-			peer_logger = spdlog::rotating_logger_mt("CONN", "Logs\\CONN-" + std::to_string(std::time(0)) + ".log", 1024 * 1024 * LOG_FILE_SIZE_IN_MB, ROTATING_FILE_COUNT);
+			connection_logger = spdlog::rotating_logger_mt("CONN", "Logs\\CONN-" + std::to_string(std::time(0)) + ".log", 1024 * 1024 * LOG_FILE_SIZE_IN_MB, ROTATING_FILE_COUNT);
 		}
 		catch (const spdlog::spdlog_ex& ex)
 		{
