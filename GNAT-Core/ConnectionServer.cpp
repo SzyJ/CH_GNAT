@@ -77,7 +77,6 @@ int ConnectionServer::establishTCPConnection() {
 
 		for (int i = 0; i < socketCount; ++i) {
 			SOCKET thisSock = copy.fd_array[i];
-			
 			if (thisSock == listenSock) {
 				// Accept new connection
 				SOCKADDR_IN clientInfo;
@@ -91,15 +90,11 @@ int ConnectionServer::establishTCPConnection() {
 				newNode->setUpdateValue('0');
 				socketMap.insert(std::pair<SOCKET, ClientNode*>(client, newNode));
 
-				// Send msg on join?
-				CONNECT_LOG_INFO("Clinet Has Connected! Size: " + std::to_string(socketMap.size()));
-				
-
 				std::map<SOCKET, ClientNode*>::iterator it;
 
 				for (it = socketMap.begin(); it != socketMap.end(); it++)
 				{
-					CONNECT_LOG_INFO("Item: " + getAddressAsString(it->second->getClient()));
+					CONNECT_LOG_INFO("Item [id=" + std::to_string(Messages::dataByte(it->second->getNodeID()).signedByte) +  "]: " + it->second->to_string());
 				}
 
 			} else {
@@ -108,22 +103,20 @@ int ConnectionServer::establishTCPConnection() {
 				char msgBuffer[BUFFER_SIZE];
 
 				int msgLength = recv(thisSock, msgBuffer, BUFFER_SIZE, 0);
-				if (msgLength <= 0) {
-					CONNECT_LOG_INFO("Removing socket.");
-					closesocket(thisSock);
-					FD_CLR(thisSock, &master);
-					if (socketMap.find(thisSock) != socketMap.end()) {
-						socketMap.erase(thisSock);
-					}
-
-					continue;
-				} else if (msgLength < MESSAGE_LENGTH) {
+				
+				if (msgLength < MESSAGE_LENGTH) {
 					continue;
 				}
+				
 
 				CONNECT_LOG_INFO("Received Msg [" + std::to_string(msgLength) + " bytes]: " + std::string(msgBuffer, msgLength));
 
 				if (Messages::codesMatch(msgBuffer, msgLength, Messages::JOIN_REQ)) {
+					if (socketMap.find(thisSock) == socketMap.end()) {
+						CONNECT_LOG_ERROR("Could not find clinet info, could not add client.");
+						continue;
+					}
+
 					std::string udpPortString(msgBuffer + MESSAGE_LENGTH, msgLength - MESSAGE_LENGTH);
 					USHORT udpPort = atoi(udpPortString.c_str());
 
@@ -131,7 +124,7 @@ int ConnectionServer::establishTCPConnection() {
 					const int ACK_MSG_LEN = MESSAGE_LENGTH + ID_LENGTH;
 					char joinAckMsg[ACK_MSG_LEN];
 					memcpy(joinAckMsg, Messages::JOIN_ACC, MESSAGE_LENGTH);
-					Messages::dataByte thisClientsID(ClientNode::getNextNodeID());
+					Messages::dataByte thisClientsID(socketMap[thisSock]->getNodeID());
 					joinAckMsg[MESSAGE_LENGTH] = thisClientsID.signedByte;
 
 					CONNECT_LOG_INFO("Sending Ack Message");
@@ -142,19 +135,20 @@ int ConnectionServer::establishTCPConnection() {
 						continue;
 					}
 
-					if (socketMap.find(thisSock) != socketMap.end()) {
-						CONNECT_LOG_INFO("Adding Client to list: " + getAddressAsString(socketMap[thisSock]->getClient()));
-						socketMap[thisSock]->updatePort(udpPort);
+					CONNECT_LOG_INFO("Adding Client to list: " + getAddressAsString(socketMap[thisSock]->getClient()));
+					socketMap[thisSock]->updatePort(udpPort);
 						
-						++clientCount;
-					} else {
-						CONNECT_LOG_INFO("Could not find clinet info, could not add client.");
-						// At this point the client doesnt know yet that they have not been added.
-					}
+					++clientCount;
+					
 
 				} else if (Messages::codesMatch(msgBuffer, msgLength, Messages::EXIT)) {
-					CONNECT_LOG_INFO("Exit Message Received");
-					// Not implemented
+					CONNECT_LOG_INFO("Exit Message Received.Removing socket.");
+					
+					closesocket(thisSock);
+					FD_CLR(thisSock, &master);
+					if (socketMap.find(thisSock) != socketMap.end()) {
+						socketMap.erase(thisSock);
+					}
 				}
 			}
 		}
@@ -190,7 +184,9 @@ int ConnectionServer::broadcastClientState() {
 }
 
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
+	CONNECT_LOG_INFO("client list size: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 	if (socketMap.size() < TARGET_PLAYER_COUNT) {
+		CONNECT_LOG_ERROR("Invalid client list size. Returning NULLPTR: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 		return nullptr;
 	}
 	std::vector<ClientNode*>* clientIPList = new std::vector<ClientNode*>;

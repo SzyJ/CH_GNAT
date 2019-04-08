@@ -28,6 +28,4 @@ struct Messages {
 	};
 
 	static bool codesMatch(const char* message, const int messageLen, const char* code);
-
-	static void getJoinReqMsg(char* message);
 };
