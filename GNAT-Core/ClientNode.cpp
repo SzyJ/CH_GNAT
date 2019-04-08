@@ -12,11 +12,18 @@ const byte ClientNode::getNextNodeID() {
 }
 
 const std::string ClientNode::to_string() const {
+	std::string address(IP_Utils::IP_STRING_LENGTH, ' ');
+	USHORT port;
+	IP_Utils::expandAddress(client, &address, &port);
 	return address + ":" + std::to_string(port);
 }
 
 const USHORT ClientNode::getPort() const {
-	return port;
+	return ntohs(client.sin_port);
+}
+
+void ClientNode::updatePort(USHORT newPort) {
+	client.sin_port = htons(newPort);
 }
 
 const SOCKADDR_IN ClientNode::getClient() const {

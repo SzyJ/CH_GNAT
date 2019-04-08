@@ -7,12 +7,9 @@
 
 ConnectionServer::ConnectionServer() {
 	GNAT::GNAT_Log::init_connection();
-
-	clientIPList = new std::vector<ClientNode*>();
-	clientIPList->reserve(TARGET_PLAYER_COUNT);
 }
 
-std::string NormalizedIPStringTest(SOCKADDR_IN addr) {
+std::string ConnectionServer::getAddressAsString(SOCKADDR_IN addr) {
 	char host[16];
 	ZeroMemory(host, 16);
 	inet_ntop(AF_INET, &addr.sin_addr, host, 16);
@@ -72,8 +69,6 @@ int ConnectionServer::establishTCPConnection() {
 	FD_ZERO(&master);
 	FD_SET(listenSock, &master);
 
-	std::map<SOCKET, SOCKADDR_IN> socketMap;
-
 	int clientCount = 0;
 
 	while(clientCount < TARGET_PLAYER_COUNT) {
@@ -92,17 +87,19 @@ int ConnectionServer::establishTCPConnection() {
 
 				FD_SET(client, &master);
 
-				socketMap.insert(std::pair<SOCKET, SOCKADDR_IN>(client, clientInfo));
+				ClientNode* newNode = new ClientNode(clientInfo);
+				newNode->setUpdateValue('0');
+				socketMap.insert(std::pair<SOCKET, ClientNode*>(client, newNode));
 
 				// Send msg on join?
 				CONNECT_LOG_INFO("Clinet Has Connected! Size: " + std::to_string(socketMap.size()));
 				
 
-				std::map<SOCKET, SOCKADDR_IN>::iterator it;
+				std::map<SOCKET, ClientNode*>::iterator it;
 
 				for (it = socketMap.begin(); it != socketMap.end(); it++)
 				{
-					CONNECT_LOG_INFO("Item: " + NormalizedIPStringTest(it->second));
+					CONNECT_LOG_INFO("Item: " + getAddressAsString(it->second->getClient()));
 				}
 
 			} else {
@@ -115,6 +112,10 @@ int ConnectionServer::establishTCPConnection() {
 					CONNECT_LOG_INFO("Removing socket.");
 					closesocket(thisSock);
 					FD_CLR(thisSock, &master);
+					if (socketMap.find(thisSock) != socketMap.end()) {
+						socketMap.erase(thisSock);
+					}
+
 					continue;
 				} else if (msgLength < MESSAGE_LENGTH) {
 					continue;
@@ -123,7 +124,6 @@ int ConnectionServer::establishTCPConnection() {
 				CONNECT_LOG_INFO("Received Msg [" + std::to_string(msgLength) + " bytes]: " + std::string(msgBuffer, msgLength));
 
 				if (Messages::codesMatch(msgBuffer, msgLength, Messages::JOIN_REQ)) {
-					
 					std::string udpPortString(msgBuffer + MESSAGE_LENGTH, msgLength - MESSAGE_LENGTH);
 					USHORT udpPort = atoi(udpPortString.c_str());
 
@@ -143,11 +143,9 @@ int ConnectionServer::establishTCPConnection() {
 					}
 
 					if (socketMap.find(thisSock) != socketMap.end()) {
-						CONNECT_LOG_INFO("Adding Client to list: " + NormalizedIPStringTest(socketMap[thisSock]));
-						socketMap[thisSock].sin_port = udpPort;
-						ClientNode* node = new ClientNode(socketMap[thisSock]);
-						node->setUpdateValue('0');
-						clientIPList->emplace_back(node);
+						CONNECT_LOG_INFO("Adding Client to list: " + getAddressAsString(socketMap[thisSock]->getClient()));
+						socketMap[thisSock]->updatePort(udpPort);
+						
 						++clientCount;
 					} else {
 						CONNECT_LOG_INFO("Could not find clinet info, could not add client.");
@@ -166,14 +164,41 @@ int ConnectionServer::establishTCPConnection() {
 }
 
 int ConnectionServer::broadcastClientState() {
-	const int CLIENT_COUNT = clientIPList->size();
-	if (CLIENT_COUNT == 0) {
-		return -1;
+	const int CLIENT_COUNT = socketMap.size();
+	const int DEF_MSG_LEN_BASE = MESSAGE_LENGTH + ID_LENGTH;
+
+	std::string** messages = new std::string*[CLIENT_COUNT];
+	int indexStepper = 0;
+
+	for (const auto &socket : socketMap) {
+		std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
+		Messages::dataByte idByte(socket.second->getNodeID());
+		thisMessage->append(std::to_string(idByte.signedByte));
+		thisMessage->append(socket.second->to_string());
+		
+		messages[indexStepper++] = thisMessage;
+	}
+
+	for (const auto &socket : socketMap) {
+		for (int i = 0; i < CLIENT_COUNT; ++i) {
+			std::string* message = messages[i];
+			send(socket.first, message->c_str(), message->length(), 0);
+		}
 	}
 
 	return 0;
 }
 
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
+	if (socketMap.size() < TARGET_PLAYER_COUNT) {
+		return nullptr;
+	}
+	std::vector<ClientNode*>* clientIPList = new std::vector<ClientNode*>;
+	clientIPList->reserve(TARGET_PLAYER_COUNT);
+
+	for (const auto &socket : socketMap) {
+		clientIPList->emplace_back(socket.second);
+	}
+
 	return clientIPList;
 }

@@ -146,9 +146,11 @@ int GameClient::initializeWinSock() {
 		return GETTING_PORT_FAILED;
 	}
 
-	SetConsoleTitleA(("Client[" + std::to_string(ntohs(sin.sin_port)) + "]").c_str());
+	USHORT portInHostByteOrder = ntohs(sin.sin_port);
 
-	return sin.sin_port;
+	SetConsoleTitleA(("Client[" + std::to_string(portInHostByteOrder) + "]").c_str());
+
+	return portInHostByteOrder;
 }
 
 int GameClient::startClient() {

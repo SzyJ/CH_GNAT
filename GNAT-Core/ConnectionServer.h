@@ -8,7 +8,9 @@ private:
 	SOCKET listenSock;
 	SOCKADDR_IN hint;
 	
-	std::vector<ClientNode*>* clientIPList;
+	std::map<SOCKET, ClientNode*> socketMap;
+
+	std::string getAddressAsString(SOCKADDR_IN addr);
 
 public:
 	ConnectionServer();
