@@ -1,5 +1,7 @@
 #pragma once
 
+#define LOCALHOST "127.0.0.1"
+
 // Winsock Version
 #define HIGHVERSION 2
 #define LOWVERSION 2

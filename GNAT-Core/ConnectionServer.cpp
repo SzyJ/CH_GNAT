@@ -64,12 +64,19 @@ int ConnectionServer::initializeWinSock() {
 	return STARTUP_SUCCESSFUL;
 }
 
+int ConnectionServer::addLocalhostAsClientOnPort(USHORT udpPort) {
+
+	// TODO: Change localhost to addres of this instance
+	thisClient = new ClientNode(0, LOCALHOST, udpPort);
+	return 0;
+}
+
 int ConnectionServer::establishTCPConnection() {
 	fd_set master;
 	FD_ZERO(&master);
 	FD_SET(listenSock, &master);
 
-	int clientCount = 0;
+	int clientCount = socketMap.size();
 
 	while(clientCount < TARGET_PLAYER_COUNT) {
 		fd_set copy = master;
@@ -163,6 +170,15 @@ int ConnectionServer::broadcastClientState() {
 
 	std::string** messages = new std::string*[CLIENT_COUNT];
 	int indexStepper = 0;
+
+	if (thisClient != nullptr) {
+		std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
+		Messages::dataByte idByte(thisClient->getNodeID());
+		thisMessage->append(std::to_string(idByte.signedByte));
+		thisMessage->append(thisClient->to_string());
+
+		messages[indexStepper++] = thisMessage;
+	}
 
 	for (const auto &socket : socketMap) {
 		std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);

@@ -8,6 +8,8 @@ private:
 	SOCKET listenSock;
 	SOCKADDR_IN hint;
 	
+	ClientNode* thisClient = nullptr;
+
 	std::map<SOCKET, ClientNode*> socketMap;
 
 	std::string getAddressAsString(SOCKADDR_IN addr);
@@ -17,6 +19,8 @@ public:
 
 	int initializeWinSock();
 	int establishTCPConnection();
+
+	int addLocalhostAsClientOnPort(USHORT udpPort);
 
 	/*
 	 * Sends the IP Address and PORT of each client
