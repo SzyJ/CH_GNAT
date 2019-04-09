@@ -15,7 +15,7 @@ namespace GNAT {
 			GNAT_Log::init_peer();
 			logInitialised = true;
 		}
-		// Start a new instance of Connection Peer
+		// Start a new instance of Connection client
 
 		return false;
 	}

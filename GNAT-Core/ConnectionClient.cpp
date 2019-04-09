@@ -4,6 +4,8 @@
 #include "ConnectionClient.h"
 #include "Messages.h"
 #include "ServerConfigs.h"
+#include "GameConfigs.h"
+#include "ClientNode.h"
 
 ConnectionClinet::ConnectionClinet() {
 	GNAT::GNAT_Log::init_connection();
@@ -100,7 +102,68 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 		return UNEXPECTED_MESSAGE;
 	}
 
-	Messages::dataByte clientID(receiveBuffer[MESSAGE_LENGTH]);
-	CONNECT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID.unsignedByte));
-	return (int) clientID.unsignedByte;
+	Messages::dataByte receivedID(receiveBuffer[MESSAGE_LENGTH]);
+	clientID = receivedID.unsignedByte;
+
+	CONNECT_LOG_INFO("Successfully joined lobby. ID: " + std::to_string(clientID));
+
+	return (int) clientID;
+}
+
+int ConnectionClinet::listenForPeerInfo() {
+	if (clientID == 0) {
+		CONNECT_LOG_WARN("This client's ID has not been initialised. All clients will be added to client list.");
+	}
+
+	int receivedClientCounter = 0;
+
+	int bytesReceived = 0;
+	const int RECEIVE_BUFFER_SIZE = 1024;
+	char receiveBuffer[RECEIVE_BUFFER_SIZE];
+
+	const int OTHER_CLIENT_COUNT = (TARGET_PLAYER_COUNT - 1);
+
+	std::vector<ClientNode*>* clientIPList = new std::vector<ClientNode*>;
+	clientIPList->reserve(OTHER_CLIENT_COUNT);
+
+	while (receivedClientCounter < OTHER_CLIENT_COUNT) {
+		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
+		bytesReceived = recv(clientSocket, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
+
+		if (!Messages::codesMatch(receiveBuffer, bytesReceived, Messages::DEFINE)) {
+			continue;
+		}
+
+		Messages::dataByte thisID(receiveBuffer[MESSAGE_LENGTH]);
+		
+		if (thisID.unsignedByte == clientID) {
+			// (Possible future improvement)
+			// This clinet's info is ignored.
+			// Could check if correct here and send message if not.
+			continue;
+		}
+
+		const int MESSAGE_WITH_ID_LENGTH = MESSAGE_LENGTH + ID_LENGTH;
+		
+		if (bytesReceived <= MESSAGE_WITH_ID_LENGTH) {
+			CONNECT_LOG_ERROR("Invalid Message length received. Message: " + std::string(receiveBuffer, bytesReceived));
+			continue;
+		}
+
+		const std::string ADDRESS_PORT_SEPERATOR(":");
+		std::string addressString(receiveBuffer + MESSAGE_WITH_ID_LENGTH, bytesReceived - MESSAGE_WITH_ID_LENGTH);
+
+		size_t seperatorPos = 0;
+		if ((seperatorPos = addressString.find(ADDRESS_PORT_SEPERATOR)) == std::string::npos) {
+			CONNECT_LOG_ERROR("Unrecognised string format received. Ignoring: " + addressString);
+			continue;
+		}
+
+		USHORT port = atoi(addressString.substr(seperatorPos + ADDRESS_PORT_SEPERATOR.length(), addressString.length()).c_str());
+		clientIPList->emplace_back(new ClientNode(thisID.unsignedByte, addressString.c_str(), seperatorPos, port));
+		CONNECT_LOG_INFO("Added node: [" + std::to_string((char) thisID.unsignedByte) + "] " + addressString);
+		++receivedClientCounter;
+	}
+
+	return 0;
 }

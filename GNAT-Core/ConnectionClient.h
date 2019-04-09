@@ -6,6 +6,7 @@ private:
 	SOCKET clientSocket;
 	SOCKADDR_IN hint;
 
+	byte clientID = 0;
 	bool connectionEstablished = false;
 
 public:
@@ -22,4 +23,6 @@ public:
 	 *          Negative value otherwise
 	 */
 	int sendJoinRequest(u_short udpPort);
+
+	int listenForPeerInfo();
 };

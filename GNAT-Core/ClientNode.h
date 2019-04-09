@@ -15,6 +15,20 @@ public:
 	ClientNode(const SOCKADDR_IN& clientObj)
 		: client(clientObj), nodeID(++lastNodeID) {};
 
+	ClientNode(const byte& id, const char* addr, const int& addrLen, const USHORT& port)
+		: nodeID(id)
+	{
+		lastNodeID = id;
+
+		int clientSize = sizeof(client);
+		ZeroMemory(&client, clientSize);
+
+		client.sin_port = htons(port);
+		client.sin_family = AF_INET;
+		inet_pton(AF_INET, std::string(addr, addrLen).c_str(), &client.sin_addr);
+	}
+
+	void setNodeID(const byte& newID);
 	const byte getNodeID() const;
 	static const byte getLastNodeID();
 	static const byte getNextNodeID();

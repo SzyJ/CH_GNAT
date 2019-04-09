@@ -142,7 +142,7 @@ int ConnectionServer::establishTCPConnection() {
 					
 
 				} else if (Messages::codesMatch(msgBuffer, msgLength, Messages::EXIT)) {
-					CONNECT_LOG_INFO("Exit Message Received.Removing socket.");
+					CONNECT_LOG_INFO("Exit Message Received. Removing socket.");
 					
 					closesocket(thisSock);
 					FD_CLR(thisSock, &master);
@@ -184,7 +184,6 @@ int ConnectionServer::broadcastClientState() {
 }
 
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
-	CONNECT_LOG_INFO("client list size: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 	if (socketMap.size() < TARGET_PLAYER_COUNT) {
 		CONNECT_LOG_ERROR("Invalid client list size. Returning NULLPTR: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 		return nullptr;

@@ -41,3 +41,7 @@ void ClientNode::setUpdateValue(const char& newValue) {
 const byte ClientNode::getNodeID() const {
 	return nodeID;
 }
+
+void ClientNode::setNodeID(const byte& newID) {
+	nodeID = newID;
+}
