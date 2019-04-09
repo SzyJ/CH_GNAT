@@ -23,7 +23,7 @@ namespace GNAT {
 			return false;
 		}
 
-		ConnectionClinet* conn = new ConnectionClinet();
+		ConnectionClient* conn = new ConnectionClient();
 		int success = 0;
 
 		success = conn->initializeWinSock();

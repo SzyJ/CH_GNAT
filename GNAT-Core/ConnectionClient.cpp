@@ -7,16 +7,16 @@
 #include "GameConfigs.h"
 #include "ClientNode.h"
 
-ConnectionClinet::ConnectionClinet() {
+ConnectionClient::ConnectionClient() {
 	GNAT::GNAT_Log::init_connection();
 }
 
-ConnectionClinet::~ConnectionClinet() {
+ConnectionClient::~ConnectionClient() {
 	closesocket(clientSocket);
 	WSACleanup();
 }
 
-int ConnectionClinet::initializeWinSock() {
+int ConnectionClient::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
@@ -44,7 +44,7 @@ int ConnectionClinet::initializeWinSock() {
 	return STARTUP_SUCCESSFUL;
 }
 
-int ConnectionClinet::connectToServer() {
+int ConnectionClient::connectToServer() {
 	if (connect(clientSocket, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
 		CONNECT_LOG_ERROR("Failed to connect to the server, Aborting!");
 		closesocket(clientSocket);
@@ -57,7 +57,7 @@ int ConnectionClinet::connectToServer() {
 	return CONNECTION_ESTABLISHED;
 }
 
-int ConnectionClinet::sendJoinRequest(u_short udpPort) {
+int ConnectionClient::sendJoinRequest(u_short udpPort) {
 	std::string port = std::to_string(udpPort);
 	const int PORT_STRING_LENGTH = port.length();
 
@@ -110,7 +110,7 @@ int ConnectionClinet::sendJoinRequest(u_short udpPort) {
 	return (int) clientID;
 }
 
-int ConnectionClinet::listenForPeerInfo() {
+int ConnectionClient::listenForPeerInfo() {
 	if (clientID == 0) {
 		CONNECT_LOG_WARN("This client's ID has not been initialised. All clients will be added to client list.");
 	}
@@ -123,7 +123,7 @@ int ConnectionClinet::listenForPeerInfo() {
 
 	const int OTHER_CLIENT_COUNT = (TARGET_PLAYER_COUNT - 1);
 
-	std::vector<ClientNode*>* clientIPList = new std::vector<ClientNode*>;
+	clientIPList = new std::vector<ClientNode*>;
 	clientIPList->reserve(OTHER_CLIENT_COUNT);
 
 	while (receivedClientCounter < OTHER_CLIENT_COUNT) {
@@ -166,4 +166,13 @@ int ConnectionClinet::listenForPeerInfo() {
 	}
 
 	return 0;
+}
+
+std::vector<ClientNode*>* ConnectionClient::getClientList() {
+	if (clientIPList == nullptr) {
+		CONNECT_LOG_ERROR("Client IP list has not been initialised. Returning null ptr");
+		return nullptr;
+	}
+
+	return clientIPList;
 }

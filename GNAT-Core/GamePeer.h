@@ -27,5 +27,6 @@ public:
 	~GamePeer();
 
 	int initializeWinSock();
+	bool setClientList(std::vector<ClientNode*>* clientIPList);
 	int startClient();
 };

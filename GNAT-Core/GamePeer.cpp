@@ -90,6 +90,12 @@ void GamePeer::ListenForKeyboard() {
 	}
 }
 
+bool GamePeer::setClientList(std::vector<ClientNode*>* peerIPList) {
+	bool overriden = this->peerIPList != NULL && peerIPList != NULL && this->peerIPList != peerIPList;
+	this->peerIPList = peerIPList;
+	return overriden;
+}
+
 int GamePeer::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
@@ -133,9 +139,10 @@ int GamePeer::initializeWinSock() {
 		return GETTING_PORT_FAILED;
 	}
 
-	SetConsoleTitleA(("Peer[" + std::to_string(ntohs(sin.sin_port)) + "]").c_str());
+	USHORT port = ntohs(sin.sin_port);
+	SetConsoleTitleA(("Peer[" + std::to_string(port) + "]").c_str());
 
-	return sin.sin_port;
+	return port;
 }
 
 int GamePeer::startClient() {

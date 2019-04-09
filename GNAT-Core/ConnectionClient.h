@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 
-class ConnectionClinet {
+class ConnectionClient {
 private:
 	SOCKET clientSocket;
 	SOCKADDR_IN hint;
@@ -9,9 +9,11 @@ private:
 	byte clientID = 0;
 	bool connectionEstablished = false;
 
+	std::vector<ClientNode*>* clientIPList = nullptr;
+
 public:
-	ConnectionClinet();
-	~ConnectionClinet();
+	ConnectionClient();
+	~ConnectionClient();
 
 	int initializeWinSock();
 	int connectToServer();
@@ -25,4 +27,6 @@ public:
 	int sendJoinRequest(u_short udpPort);
 
 	int listenForPeerInfo();
+
+	std::vector<ClientNode*>* getClientList();
 };
