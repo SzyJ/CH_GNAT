@@ -15,7 +15,7 @@ public:
 	ConnectionClient();
 	~ConnectionClient();
 
-	int initializeWinSock();
+	int initializeWinSock(const char* address, const USHORT port);
 	int connectToServer();
 	/*
 	 * Sends Join Request to server

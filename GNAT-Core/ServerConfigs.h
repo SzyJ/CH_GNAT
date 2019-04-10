@@ -7,8 +7,8 @@
 #define LOWVERSION 2
 
 // Server Attributes
-#define ADDRESS "127.0.0.1"
-#define PORT 45000
+#define SERVER_ADDRESS "127.0.0.1"
+#define SERVER_PORT 45000
 
 // State Broadcast Rate
 #define SEND_DELAY 1000

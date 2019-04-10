@@ -17,7 +17,7 @@ ConnectionClient::~ConnectionClient() {
 	WSACleanup();
 }
 
-int ConnectionClient::initializeWinSock() {
+int ConnectionClient::initializeWinSock(const char* address, const USHORT port) {
 	// Init WinSock
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
@@ -36,9 +36,9 @@ int ConnectionClient::initializeWinSock() {
 
 	// Define Server Info
 	ZeroMemory(&hint, sizeof(hint));
-	hint.sin_port = htons(PORT);
+	hint.sin_port = htons(port);
 	hint.sin_family = AF_INET;
-	inet_pton(AF_INET, ADDRESS, &hint.sin_addr);
+	inet_pton(AF_INET, address, &hint.sin_addr);
 
 	listen(clientSocket, SOMAXCONN);
 
@@ -162,6 +162,7 @@ int ConnectionClient::listenForPeerInfo() {
 
 		USHORT port = atoi(addressString.substr(seperatorPos + ADDRESS_PORT_SEPERATOR.length(), addressString.length()).c_str());
 		const char* address = addressString.substr(0, seperatorPos).c_str();
+
 
 		clientIPList->emplace_back(new ClientNode(thisID.unsignedByte, (address == SESSION_HOST_TOKEN) ? SESSION_HOST_ADDRESS : address, port));
 		CONNECT_LOG_INFO("Added node: [" + std::to_string((char) thisID.unsignedByte) + "] " + addressString);

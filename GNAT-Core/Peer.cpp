@@ -2,6 +2,7 @@
 #include "Peer.h"
 #include "ConnectionServer.h"
 #include "ConnectionClient.h"
+#include "PeerToPeerSessionConfigs.h"
 
 namespace GNAT {
 	Peer::Peer() {
@@ -35,7 +36,7 @@ namespace GNAT {
 		ConnectionClient* connectionClient = new ConnectionClient();
 		int success = 0;
 
-		success = connectionClient->initializeWinSock();
+		success = connectionClient->initializeWinSock(SESSION_HOST_ADDRESS, SESSION_HOST_PORT);
 		if (success < 0) {
 			PEER_LOG_ERROR("Failed to initialise TCP");
 			return false;
@@ -92,6 +93,8 @@ namespace GNAT {
 		ConnectionServer* connectionServer = new ConnectionServer();
 		PEER_LOG_INFO("Starting Winsock...");
 		connectionServer->initializeWinSock();
+
+		connectionServer->addLocalhostAsClientOnPort(udpPort);
 
 		PEER_LOG_INFO("Establishing TCP Connection..");
 		connectionServer->establishTCPConnection();

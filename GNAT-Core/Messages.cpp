@@ -23,3 +23,12 @@ bool Messages::codesMatch(const char* message, const int messageLen, const char*
 
 	return true;
 }
+
+std::string* Messages::construct_DEFINE(const ClientNode* node) {
+	std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
+	Messages::dataByte idByte(node->getNodeID());
+	thisMessage->append(std::to_string(idByte.signedByte));
+	thisMessage->append(node->to_string());
+
+	return thisMessage;
+}

@@ -2,6 +2,7 @@
 #include "Client.h"
 #include "IPUtils.h"
 #include "Messages.h"
+#include "ServerConfigs.h"
 
 namespace GNAT {
     Client::Client() {
@@ -26,7 +27,7 @@ namespace GNAT {
 		ConnectionClient* conn = new ConnectionClient();
 		int success = 0;
 
-		success = conn->initializeWinSock();
+		success = conn->initializeWinSock(SERVER_ADDRESS, SERVER_PORT);
 		if (success < 0) {
 			CLIENT_LOG_ERROR("Failed to initialise TCP");
 			return false;

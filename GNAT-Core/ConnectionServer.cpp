@@ -9,6 +9,10 @@ ConnectionServer::ConnectionServer() {
 	GNAT::GNAT_Log::init_connection();
 }
 
+ConnectionServer::~ConnectionServer() {
+	delete thisClient;
+}
+
 std::string ConnectionServer::getAddressAsString(SOCKADDR_IN addr) {
 	char host[16];
 	ZeroMemory(host, 16);
@@ -49,7 +53,7 @@ int ConnectionServer::initializeWinSock() {
 
 	// Define Server Info
 	ZeroMemory(&hint, sizeof(hint));
-	hint.sin_port = htons(PORT);
+	hint.sin_port = htons(SERVER_PORT);
 	hint.sin_family = AF_INET;
 	hint.sin_addr.S_un.S_addr = INADDR_ANY;
 
@@ -172,21 +176,11 @@ int ConnectionServer::broadcastClientState() {
 	int indexStepper = 0;
 
 	if (thisClient != nullptr) {
-		std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
-		Messages::dataByte idByte(thisClient->getNodeID());
-		thisMessage->append(std::to_string(idByte.signedByte));
-		thisMessage->append(thisClient->to_string());
-
-		messages[indexStepper++] = thisMessage;
+		messages[indexStepper++] = Messages::construct_DEFINE(thisClient);
 	}
 
 	for (const auto &socket : socketMap) {
-		std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
-		Messages::dataByte idByte(socket.second->getNodeID());
-		thisMessage->append(std::to_string(idByte.signedByte));
-		thisMessage->append(socket.second->to_string());
-		
-		messages[indexStepper++] = thisMessage;
+		messages[indexStepper++] = Messages::construct_DEFINE(socket.second);
 	}
 
 	for (const auto &socket : socketMap) {
