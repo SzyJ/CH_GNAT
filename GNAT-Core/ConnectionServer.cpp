@@ -196,6 +196,11 @@ int ConnectionServer::broadcastClientState() {
 		}
 	}
 
+	for (int i = 0; i < CLIENT_COUNT; ++i) {
+		delete messages[i];
+	}
+	delete messages;
+
 	return 0;
 }
 

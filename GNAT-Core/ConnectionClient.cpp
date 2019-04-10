@@ -5,6 +5,7 @@
 #include "Messages.h"
 #include "ServerConfigs.h"
 #include "GameConfigs.h"
+#include "PeerToPeerSessionConfigs.h"
 #include "ClientNode.h"
 
 ConnectionClient::ConnectionClient() {
@@ -160,7 +161,9 @@ int ConnectionClient::listenForPeerInfo() {
 		}
 
 		USHORT port = atoi(addressString.substr(seperatorPos + ADDRESS_PORT_SEPERATOR.length(), addressString.length()).c_str());
-		clientIPList->emplace_back(new ClientNode(thisID.unsignedByte, addressString.c_str(), seperatorPos, port));
+		const char* address = addressString.substr(0, seperatorPos).c_str();
+
+		clientIPList->emplace_back(new ClientNode(thisID.unsignedByte, (address == SESSION_HOST_TOKEN) ? SESSION_HOST_ADDRESS : address, port));
 		CONNECT_LOG_INFO("Added node: [" + std::to_string((char) thisID.unsignedByte) + "] " + addressString);
 		++receivedClientCounter;
 	}

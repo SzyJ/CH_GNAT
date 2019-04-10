@@ -3,6 +3,8 @@
 #define MESSAGE_LENGTH 2
 #define ID_LENGTH 1
 
+#define SESSION_HOST_TOKEN "SH"
+
 struct Messages {
 	static const char* JOIN_REQ;
 	static const char* JOIN_ACC;
