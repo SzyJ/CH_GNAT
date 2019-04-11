@@ -33,7 +33,7 @@ void host() {
 
 	std::string cmd;
 	while(true) {
-		std::cout << "[client : host] ";
+		std::cout << "[Serv] ";
 		std::cin >> cmd;
 
 		if (cmd == "conn") {
@@ -52,7 +52,7 @@ void join() {
 
 	std::string cmd;
 	while (true) {
-		std::cout << "[client : join] ";
+		std::cout << "[Clie] ";
 		std::cin >> cmd;
 
 		if (cmd == "conn") {
@@ -70,7 +70,7 @@ void peer() {
 
 	std::string cmd;
 	while (true) {
-		std::cout << "[client : join] ";
+		std::cout << "[Peer] ";
 		std::cin >> cmd;
 
 		if (cmd == "host") {
