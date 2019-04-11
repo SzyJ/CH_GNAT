@@ -42,22 +42,33 @@ bool GamePeer::sendToPeers(const char* message, const int messageLen, const char
 	return true;
 }
 
-
 void GamePeer::ListenForUpdates() {
 	const int BUFFER_SIZE = 1024;
 	char msgBuffer[BUFFER_SIZE];
 
-	while (true) {
+	while (threadsRunning) {
 		SOCKADDR_IN remoteAddr;
 		int	remoteAddrLen = sizeof(remoteAddr);
 
 		int bytesReceived = recvfrom(peerSocket, msgBuffer, BUFFER_SIZE, 0, (sockaddr*)&remoteAddr, &remoteAddrLen);
 
 		if (bytesReceived > 0) {
-			// Update Values
-			PEER_LOG_INFO("Received message: " + std::string(msgBuffer, bytesReceived));
-		} else {
-			PEER_LOG_ERROR("The connection to the server has been lost.");
+			PEER_LOG_INFO("Message Received: " + std::string(msgBuffer, bytesReceived));
+
+			if (bytesReceived >= MESSAGE_LENGTH + 2 &&
+				Messages::codesMatch(msgBuffer, bytesReceived, Messages::UPDATE)) {
+				Messages::dataByte idByte(msgBuffer[MESSAGE_LENGTH]);
+				char val(msgBuffer[MESSAGE_LENGTH + 1]);
+
+				for (ClientNode* client : *peerIPList) {
+					if (client->getClient().sin_addr.S_un.S_addr == remoteAddr.sin_addr.S_un.S_addr
+						&& client->getNodeID() == idByte.unsignedByte) {
+						SERVER_LOG_INFO("Updating ID " + std::to_string((char)idByte.unsignedByte) + " value to: " + std::to_string(val));
+						client->setUpdateValue(val);
+						break;
+					}
+				}
+			}
 		}
 
 		Sleep(1);
@@ -145,9 +156,19 @@ int GamePeer::initializeWinSock() {
 	return port;
 }
 
-int GamePeer::startClient() {
-	//std::thread listenThread(ListenForKeyboard);
-	ListenForUpdates();
+int GamePeer::startGame() {
+	threadsRunning = true;
+
+	std::thread updateThread([=] { ListenForKeyboard(); });
+	std::thread listenThread([=] { ListenForUpdates(); });
+
+	while (std::cin.get() != 27);
+
+	threadsRunning = false;
+	CLIENT_LOG_INFO("Waiting for threads to finish.");
+	updateThread.join();
+	listenThread.join();
+	CLIENT_LOG_INFO("Threads successfully closed.");
 
 	return 0;
 }

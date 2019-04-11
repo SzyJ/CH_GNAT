@@ -4,6 +4,8 @@
 
 class GamePeer {
 private:
+	bool threadsRunning = false;
+
 	// Winsock Values
 	SOCKET peerSocket;
 	SOCKADDR_IN peerHint;
@@ -28,5 +30,5 @@ public:
 
 	int initializeWinSock();
 	bool setClientList(std::vector<ClientNode*>* clientIPList);
-	int startClient();
+	int startGame();
 };

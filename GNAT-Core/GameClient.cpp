@@ -116,9 +116,9 @@ int GameClient::initializeWinSock() {
 
 	// Define Server Info
 	ZeroMemory(&serverHint, sizeof(serverHint));
-	serverHint.sin_port = htons(PORT);
+	serverHint.sin_port = htons(SERVER_PORT);
 	serverHint.sin_family = AF_INET;
-	inet_pton(AF_INET, ADDRESS, &serverHint.sin_addr);
+	inet_pton(AF_INET, SERVER_ADDRESS, &serverHint.sin_addr);
 
 	// Define Client Info
 	int clientSize = sizeof(clientHint);

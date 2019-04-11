@@ -6,7 +6,7 @@
 #include "ServerConfigs.h"
 
 GameServer::GameServer() {
-	SetConsoleTitleA(("Server [" + std::to_string(PORT) + "]").c_str());
+	SetConsoleTitleA(("Server [" + std::to_string(SERVER_PORT) + "]").c_str());
 }
 
 GameServer::~GameServer() {
@@ -127,7 +127,7 @@ int GameServer::initializeWinSock() {
 	// Define Server Info
 	const int SERVER_HINT_SIZE = sizeof(serverHint);
 	ZeroMemory(&serverHint, SERVER_HINT_SIZE);
-	serverHint.sin_port = htons(PORT);
+	serverHint.sin_port = htons(SERVER_PORT);
 	serverHint.sin_family = AF_INET;
 	serverHint.sin_addr.s_addr = htonl(INADDR_ANY);
 
