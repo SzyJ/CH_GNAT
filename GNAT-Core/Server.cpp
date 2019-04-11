@@ -6,7 +6,7 @@
 
 namespace GNAT {
 	Server::Server() {
-		SetConsoleTitleA(("Server [" + std::to_string(PORT) + "]").c_str());
+		SetConsoleTitleA(("Server [" + std::to_string(SERVER_PORT) + "]").c_str());
 	}
 
 	Server::~Server() {

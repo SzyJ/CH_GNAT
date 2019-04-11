@@ -16,6 +16,7 @@ private:
 
 public:
 	ConnectionServer();
+	~ConnectionServer();
 
 	int initializeWinSock();
 	int establishTCPConnection();

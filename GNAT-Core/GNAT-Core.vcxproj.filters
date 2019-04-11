@@ -113,5 +113,8 @@
     <ClInclude Include="Peer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PeerToPeerSessionConfigs.h">
+      <Filter>Header Files\Configs</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
