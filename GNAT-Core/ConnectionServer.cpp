@@ -70,7 +70,7 @@ int ConnectionServer::initializeWinSock() {
 
 int ConnectionServer::addLocalhostAsClientOnPort(USHORT udpPort) {
 
-	// TODO: Change localhost to addres of this instance
+	// TODO: Change localhost to address of this instance
 	thisClient = new ClientNode(0, LOCALHOST, udpPort);
 	return 0;
 }
@@ -80,7 +80,7 @@ int ConnectionServer::establishTCPConnection() {
 	FD_ZERO(&master);
 	FD_SET(listenSock, &master);
 
-	int clientCount = socketMap.size();
+	int clientCount = socketMap.size() + (thisClient == nullptr ? 0 : 1);
 
 	while(clientCount < TARGET_PLAYER_COUNT) {
 		fd_set copy = master;
@@ -169,37 +169,45 @@ int ConnectionServer::establishTCPConnection() {
 }
 
 int ConnectionServer::broadcastClientState() {
-	const int CLIENT_COUNT = socketMap.size();
+	const int CLIENT_COUNT = socketMap.size() + (thisClient == nullptr ? 0 : 1);
 	const int DEF_MSG_LEN_BASE = MESSAGE_LENGTH + ID_LENGTH;
 
-	std::string** messages = new std::string*[CLIENT_COUNT];
+	CONNECT_LOG_INFO("Messages to broadcast: " + std::to_string(CLIENT_COUNT));
+
+	char** messages = new char*[CLIENT_COUNT];
+	int* messageLengths = new int[CLIENT_COUNT];
 	int indexStepper = 0;
 
 	if (thisClient != nullptr) {
-		messages[indexStepper++] = Messages::construct_DEFINE(thisClient);
+		messages[indexStepper] = Messages::construct_DEFINE(thisClient, &(messageLengths[indexStepper]));
+		++indexStepper;
 	}
 
 	for (const auto &socket : socketMap) {
-		messages[indexStepper++] = Messages::construct_DEFINE(socket.second);
+		messages[indexStepper] = Messages::construct_DEFINE(socket.second, &(messageLengths[indexStepper]));
+		++indexStepper;
 	}
 
+	CONNECT_LOG_INFO("Defined messages: " + std::to_string(indexStepper - 1));
+
 	for (const auto &socket : socketMap) {
+		CONNECT_LOG_INFO("Sending to ID: " + std::to_string(socket.second->getNodeID()));
 		for (int i = 0; i < CLIENT_COUNT; ++i) {
-			std::string* message = messages[i];
-			send(socket.first, message->c_str(), message->length(), 0);
+			send(socket.first, messages[i], messageLengths[i], 0);
 		}
 	}
 
 	for (int i = 0; i < CLIENT_COUNT; ++i) {
 		delete messages[i];
 	}
-	delete messages;
+	delete[] messages;
+	delete[] messageLengths;
 
 	return 0;
 }
 
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
-	if (socketMap.size() < TARGET_PLAYER_COUNT) {
+	if (socketMap.size() + (thisClient == nullptr ? 0 : 1) < TARGET_PLAYER_COUNT) {
 		CONNECT_LOG_ERROR("Invalid client list size. Returning NULLPTR: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 		return nullptr;
 	}

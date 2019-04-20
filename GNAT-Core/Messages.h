@@ -52,5 +52,5 @@ struct Messages {
 
 	static bool codesMatch(const char* message, const int messageLen, const char* code);
 
-	static std::string* construct_DEFINE(const ClientNode* node);
+	static char* construct_DEFINE(const ClientNode* node, int* messageLength);
 };
