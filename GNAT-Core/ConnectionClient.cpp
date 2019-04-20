@@ -122,13 +122,12 @@ int ConnectionClient::listenForPeerInfo() {
 	const int RECEIVE_BUFFER_SIZE = 1024;
 	char receiveBuffer[RECEIVE_BUFFER_SIZE];
 
+	const int OTHER_CLIENT_COUNT = (TARGET_PLAYER_COUNT - 1);
+
 	clientIPList = new std::vector<ClientNode*>;
-	clientIPList->reserve(TARGET_PLAYER_COUNT - 1);
+	clientIPList->reserve(OTHER_CLIENT_COUNT);
 
-
-	CONNECT_LOG_INFO("Waiting for " + std::to_string(TARGET_PLAYER_COUNT) + " clients");
-
-	while (receivedClientCounter < TARGET_PLAYER_COUNT) {
+	while (receivedClientCounter < OTHER_CLIENT_COUNT) {
 		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
 		bytesReceived = recv(clientSocket, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
 
@@ -136,12 +135,8 @@ int ConnectionClient::listenForPeerInfo() {
 			continue;
 		}
 
-		CONNECT_LOG_INFO("Message received: " + std::string(receiveBuffer, bytesReceived));
-
 		Messages::dataByte thisID(receiveBuffer[MESSAGE_LENGTH]);
 		
-		CONNECT_LOG_INFO("ID in message: " + std::to_string(thisID.unsignedByte) + ", this ID: " + std::to_string(clientID));
-
 		if (thisID.unsignedByte == clientID) {
 			// (Possible future improvement)
 			// This clinet's info is ignored.

@@ -24,20 +24,11 @@ bool Messages::codesMatch(const char* message, const int messageLen, const char*
 	return true;
 }
 
-char* Messages::construct_DEFINE(const ClientNode* node, int* messageLength) {
-	Messages::dataByte nodeID(node->getNodeID());
-	const std::string addressString = node->to_string();
-	const int ADDRESS_LENGTH = addressString.length();
-	const int THIS_MESSAGE_LENGTH = MESSAGE_LENGTH + ID_LENGTH + ADDRESS_LENGTH;
+std::string* Messages::construct_DEFINE(const ClientNode* node) {
+	std::string* thisMessage = new std::string(Messages::DEFINE, MESSAGE_LENGTH);
+	Messages::dataByte idByte(node->getNodeID());
+	thisMessage->append(std::to_string(idByte.signedByte));
+	thisMessage->append(node->to_string());
 
-	char* message = new char[THIS_MESSAGE_LENGTH];
-	//memcpy(message, Messages::DEFINE, MESSAGE_LENGTH);
-	message[MESSAGE_LENGTH] = nodeID.signedByte;
-	//memcpy(message + MESSAGE_LENGTH + ID_LENGTH, addressString.c_str(), ADDRESS_LENGTH);
-
-	if (messageLength != nullptr) {
-		*messageLength = THIS_MESSAGE_LENGTH;
-	}
-
-	return message;
+	return thisMessage;
 }
