@@ -3,6 +3,7 @@
 In order to also clone the 3rd party logging library, please remember to update submodules. Without this, the code will not compile.
 ```
 git clone https://github.com/SzyJ/GNAT_Core
+git submodule init
 git submodule update
 ```
 
