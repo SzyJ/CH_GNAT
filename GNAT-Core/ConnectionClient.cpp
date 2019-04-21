@@ -122,12 +122,10 @@ int ConnectionClient::listenForPeerInfo() {
 	const int RECEIVE_BUFFER_SIZE = 1024;
 	char receiveBuffer[RECEIVE_BUFFER_SIZE];
 
-	const int OTHER_CLIENT_COUNT = (TARGET_PLAYER_COUNT - 1);
-
 	clientIPList = new std::vector<ClientNode*>;
-	clientIPList->reserve(OTHER_CLIENT_COUNT);
+	clientIPList->reserve((TARGET_PLAYER_COUNT - 1));
 
-	while (receivedClientCounter < OTHER_CLIENT_COUNT) {
+	while (receivedClientCounter < TARGET_PLAYER_COUNT) {
 		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
 		bytesReceived = recv(clientSocket, receiveBuffer, RECEIVE_BUFFER_SIZE, 0);
 

@@ -99,6 +99,10 @@ namespace GNAT {
 		PEER_LOG_INFO("Establishing TCP Connection..");
 		connectionServer->establishTCPConnection();
 
+		Sleep(1000); // Sleep to allow time for clients to start listening.
+		PEER_LOG_INFO("Broadcasting Client info to all clients..");
+		connectionServer->broadcastClientState();
+
 		peerIPList = connectionServer->getClientList();
 
 		PEER_LOG_INFO("Killing Connection Server..");

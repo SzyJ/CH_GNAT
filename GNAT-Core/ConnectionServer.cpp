@@ -69,8 +69,7 @@ int ConnectionServer::initializeWinSock() {
 }
 
 int ConnectionServer::addLocalhostAsClientOnPort(USHORT udpPort) {
-
-	// TODO: Change localhost to addres of this instance
+	// TODO: Change localhost to address of this instance
 	thisClient = new ClientNode(0, LOCALHOST, udpPort);
 	return 0;
 }
@@ -80,7 +79,7 @@ int ConnectionServer::establishTCPConnection() {
 	FD_ZERO(&master);
 	FD_SET(listenSock, &master);
 
-	int clientCount = socketMap.size();
+	int clientCount = socketMap.size() + (thisClient == nullptr ? 0 : 1);
 
 	while(clientCount < TARGET_PLAYER_COUNT) {
 		fd_set copy = master;
@@ -169,7 +168,7 @@ int ConnectionServer::establishTCPConnection() {
 }
 
 int ConnectionServer::broadcastClientState() {
-	const int CLIENT_COUNT = socketMap.size();
+	const int CLIENT_COUNT = socketMap.size() + (thisClient == nullptr ? 0 : 1);
 	const int DEF_MSG_LEN_BASE = MESSAGE_LENGTH + ID_LENGTH;
 
 	std::string** messages = new std::string*[CLIENT_COUNT];
@@ -193,13 +192,13 @@ int ConnectionServer::broadcastClientState() {
 	for (int i = 0; i < CLIENT_COUNT; ++i) {
 		delete messages[i];
 	}
-	delete messages;
+	delete[] messages;
 
 	return 0;
 }
 
 std::vector<ClientNode*>* ConnectionServer::getClientList() {
-	if (socketMap.size() < TARGET_PLAYER_COUNT) {
+	if ((socketMap.size() + (thisClient == nullptr ? 0 : 1)) < TARGET_PLAYER_COUNT) {
 		CONNECT_LOG_ERROR("Invalid client list size. Returning NULLPTR: " + std::to_string(socketMap.size()) + "/" + std::to_string(TARGET_PLAYER_COUNT));
 		return nullptr;
 	}
