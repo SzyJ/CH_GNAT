@@ -15,6 +15,11 @@ GamePeer::~GamePeer() {
 }
 
 char GamePeer::checkForUserInput() {
+	bool isConsoleWindowFocussed = (GetConsoleWindow() == GetForegroundWindow());
+	if (!isConsoleWindowFocussed) {
+		return NULL;
+	}
+
 	for (int i = 0; i < 10; ++i) {
 		if (GetAsyncKeyState(0x30 + i)) {
 			return '0' + i;
@@ -79,7 +84,7 @@ void GamePeer::ListenForKeyboard() {
 	// Listen for keyboard input and send update to server
 	char validKeycodeUpdate = NULL;
 
-	while (true) {
+	while (threadsRunning) {
 		validKeycodeUpdate = checkForUserInput();
 
 		if (validKeycodeUpdate == NULL ||

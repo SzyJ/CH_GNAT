@@ -123,7 +123,7 @@ int ConnectionClient::listenForPeerInfo() {
 	char receiveBuffer[RECEIVE_BUFFER_SIZE];
 
 	clientIPList = new std::vector<ClientNode*>;
-	clientIPList->reserve((TARGET_PLAYER_COUNT - 1));
+	clientIPList->reserve(TARGET_PLAYER_COUNT - 1);
 
 	while (receivedClientCounter < TARGET_PLAYER_COUNT) {
 		ZeroMemory(receiveBuffer, RECEIVE_BUFFER_SIZE);
@@ -139,6 +139,8 @@ int ConnectionClient::listenForPeerInfo() {
 			// (Possible future improvement)
 			// This clinet's info is ignored.
 			// Could check if correct here and send message if not.
+
+			++receivedClientCounter;
 			continue;
 		}
 
@@ -163,7 +165,11 @@ int ConnectionClient::listenForPeerInfo() {
 
 
 		clientIPList->emplace_back(new ClientNode(thisID.unsignedByte, (address == SESSION_HOST_TOKEN) ? SESSION_HOST_ADDRESS : address, port));
-		CONNECT_LOG_INFO("Added node: [" + std::to_string((char) thisID.unsignedByte) + "] " + addressString);
+		CONNECT_LOG_INFO("Added node: [" + std::to_string((char)thisID.unsignedByte) + "] " + addressString);
+		CONNECT_LOG_INFO("Clients:");
+		for (ClientNode* node : *clientIPList) {
+			CONNECT_LOG_INFO("    [" + std::to_string(node->getNodeID()) + "] " + node->to_string());
+		}
 		++receivedClientCounter;
 	}
 

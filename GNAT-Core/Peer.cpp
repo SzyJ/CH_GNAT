@@ -116,7 +116,13 @@ namespace GNAT {
 			logInitialised = true;
 		}
 		
+		if (gamePeer == nullptr) {
+			return false;
+		}
 
-		return false;
+		gamePeer->setClientList(peerIPList);
+		gamePeer->startGame();
+
+		return true;
 	}
 }

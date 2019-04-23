@@ -182,8 +182,9 @@ int ConnectionServer::broadcastClientState() {
 		messages[indexStepper++] = Messages::construct_DEFINE(socket.second);
 	}
 
-	for (const auto &socket : socketMap) {
-		for (int i = 0; i < CLIENT_COUNT; ++i) {
+	for (int i = 0; i < CLIENT_COUNT; ++i) {
+		Sleep(500);
+		for (const auto &socket : socketMap) {
 			std::string* message = messages[i];
 			send(socket.first, message->c_str(), message->length(), 0);
 		}
