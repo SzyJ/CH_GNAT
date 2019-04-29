@@ -11,9 +11,10 @@ void peer();
 int main() {
 	std::string cmd;
 
-	std::cout << "(H)ost, (J)oin or (P)eer Session?";
-	std::cin >> cmd;
 	while (true) {
+		std::cout << "(H)ost, (J)oin or (P)eer Session?";
+		std::cin >> cmd;
+
 		if (cmd == "H") {
 			host();
 		} else if (cmd == "J") {
@@ -47,7 +48,6 @@ void host() {
 }
 
 void join() {
-	//GNAT::GNAT_Log::init();
 	GNAT::Client* client = new GNAT::Client();
 
 	std::string cmd;

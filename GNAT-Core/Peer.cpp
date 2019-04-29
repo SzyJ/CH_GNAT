@@ -36,7 +36,7 @@ namespace GNAT {
 		ConnectionClient* connectionClient = new ConnectionClient();
 		int success = 0;
 
-		success = connectionClient->initializeWinSock(SESSION_HOST_ADDRESS, SESSION_HOST_PORT);
+		success = connectionClient->initializeWinSock();
 		if (success < 0) {
 			PEER_LOG_ERROR("Failed to initialise TCP");
 			return false;

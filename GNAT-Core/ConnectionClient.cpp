@@ -17,7 +17,7 @@ ConnectionClient::~ConnectionClient() {
 	WSACleanup();
 }
 
-int ConnectionClient::initializeWinSock(const char* address, const USHORT port) {
+int ConnectionClient::initializeWinSock() {
 	// Init WinSock
 	WSAData wsaData;
 	WORD DllVersion = MAKEWORD(LOWVERSION, HIGHVERSION);
@@ -35,19 +35,46 @@ int ConnectionClient::initializeWinSock(const char* address, const USHORT port) 
 	}
 
 	// Define Server Info
-	ZeroMemory(&hint, sizeof(hint));
-	hint.sin_port = htons(port);
-	hint.sin_family = AF_INET;
-	inet_pton(AF_INET, address, &hint.sin_addr);
+	addrinfo server_hint;
+	ZeroMemory(&server_hint, sizeof(server_hint));
+	server_hint.ai_family = AF_INET;
+	server_hint.ai_socktype = SOCK_STREAM;
+	server_hint.ai_protocol = IPPROTO_TCP;
 
-	listen(clientSocket, SOMAXCONN);
+	if (getaddrinfo(SERVER_ADDRESS, S_SERVER_PORT, &server_hint, &server_addr_result) != 0) {
+		CONNECT_LOG_ERROR("Failed to get server info. Aborting...");
+		WSACleanup();
+		return GET_ADDR_INFO_FAILED;
+	}
+
 
 	return STARTUP_SUCCESSFUL;
 }
 
 int ConnectionClient::connectToServer() {
-	if (connect(clientSocket, (sockaddr*)&hint, sizeof(hint)) == SOCKET_ERROR) {
-		CONNECT_LOG_ERROR("Failed to connect to the server, Aborting!");
+	for (addrinfo* ptr = server_addr_result; ptr != nullptr; ptr = ptr->ai_next) {
+		clientSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
+		if (clientSocket == INVALID_SOCKET) {
+			CONNECT_LOG_ERROR("Failed to create socket");
+			WSACleanup();
+			return FAILED_TO_CONNECT_TO_SERVER;
+		}
+
+		if (connect(clientSocket, ptr->ai_addr, (int) ptr->ai_addrlen) == SOCKET_ERROR) {
+			CONNECT_LOG_ERROR("Failed to connect to the server... ");
+			closesocket(clientSocket);
+			WSACleanup();
+			
+			continue;
+		}
+
+		break;
+	}
+
+	freeaddrinfo(server_addr_result);
+
+	if (clientSocket == INVALID_SOCKET) {
+		CONNECT_LOG_ERROR("Connection failed, Aborting!");
 		closesocket(clientSocket);
 		WSACleanup();
 		return FAILED_TO_CONNECT_TO_SERVER;

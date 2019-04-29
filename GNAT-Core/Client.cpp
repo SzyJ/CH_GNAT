@@ -27,7 +27,7 @@ namespace GNAT {
 		ConnectionClient* conn = new ConnectionClient();
 		int success = 0;
 
-		success = conn->initializeWinSock(SERVER_ADDRESS, SERVER_PORT);
+		success = conn->initializeWinSock();
 		if (success < 0) {
 			CLIENT_LOG_ERROR("Failed to initialise TCP");
 			return false;

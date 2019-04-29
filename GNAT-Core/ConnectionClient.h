@@ -4,8 +4,8 @@
 
 class ConnectionClient {
 private:
-	SOCKET clientSocket;
-	SOCKADDR_IN hint;
+	SOCKET clientSocket = INVALID_SOCKET;
+	addrinfo* server_addr_result = nullptr;
 
 	byte clientID = 0;
 	bool connectionEstablished = false;
@@ -16,7 +16,7 @@ public:
 	ConnectionClient();
 	~ConnectionClient();
 
-	int initializeWinSock(const char* address, const USHORT port);
+	int initializeWinSock();
 	int connectToServer();
 	/*
 	 * Sends Join Request to server

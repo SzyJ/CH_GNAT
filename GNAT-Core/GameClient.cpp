@@ -3,7 +3,6 @@
 #include "ErrorCodes.h"
 #include "IPUtils.h"
 #include "Messages.h"
-#include <thread>
 #include "ServerConfigs.h"
 
 GameClient::GameClient() {

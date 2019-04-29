@@ -5,4 +5,4 @@
 
 // Session Host Attributes
 #define SESSION_HOST_ADDRESS "127.0.0.1"
-#define SESSION_HOST_PORT 45000
+#define SESSION_HOST_PORT "45000"
