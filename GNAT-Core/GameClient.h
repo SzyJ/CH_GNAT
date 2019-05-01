@@ -1,8 +1,11 @@
 #include "pch.h"
 #include "ClientNode.h"
+#include <time.h>
 
 class GameClient {
 private:
+	time_t timeSinceLastUpdate;
+
 	// Winsock Values
 	SOCKET clientSocket;
 	SOCKADDR_IN serverHint;

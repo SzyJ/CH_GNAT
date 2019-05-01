@@ -1,3 +1,3 @@
 #pragma once
 
-#define TARGET_PLAYER_COUNT 4
+#define TARGET_PLAYER_COUNT 2

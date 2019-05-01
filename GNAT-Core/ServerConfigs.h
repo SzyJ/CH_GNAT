@@ -7,6 +7,7 @@
 #define LOWVERSION 2
 
 // Server Attributes
+//#define SERVER_ADDRESS "192.168.1.65"
 #define SERVER_ADDRESS "127.0.0.1"
 #define SERVER_PORT 45000
 #define S_SERVER_PORT "45000"

@@ -60,6 +60,12 @@ void GameClient::ListenForUpdates() {
 		if (bytesReceived > 0) {
 			// Update Values
 			CLIENT_LOG_INFO("Received message: " + std::string(msgBuffer, bytesReceived));
+
+			double jitter = difftime(time(0), timeSinceLastUpdate);
+			timeSinceLastUpdate = time(0);
+
+			CLIENT_LOG_INFO(" -->> Time since last msg: " + std::to_string(jitter));
+
 		} else {
 			CLIENT_LOG_ERROR("The connection to the server has been lost.");
 		}
@@ -157,6 +163,8 @@ int GameClient::startClient() {
 		CLIENT_LOG_ERROR("Invalid client ID provided. Aborting...");
 		return INVALID_CLIENT_ID;
 	}
+
+	timeSinceLastUpdate = time(0);
 
 	threadsRunning = true;
 
