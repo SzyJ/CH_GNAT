@@ -51,6 +51,8 @@ void GameClient::ListenForUpdates() {
 	const int BUFFER_SIZE = 1024;
 	char msgBuffer[BUFFER_SIZE];
 
+	auto timeSinceLastUpdate = std::chrono::high_resolution_clock::now();
+
 	while (threadsRunning) {
 		SOCKADDR_IN remoteAddr;
 		int	remoteAddrLen = sizeof(remoteAddr);
@@ -61,10 +63,10 @@ void GameClient::ListenForUpdates() {
 			// Update Values
 			CLIENT_LOG_INFO("Received message: " + std::string(msgBuffer, bytesReceived));
 
-			double jitter = difftime(time(0), timeSinceLastUpdate);
-			timeSinceLastUpdate = time(0);
+			std::chrono::duration<double> jitter = std::chrono::high_resolution_clock::now() - timeSinceLastUpdate;
+			timeSinceLastUpdate = std::chrono::high_resolution_clock::now();;
 
-			CLIENT_LOG_INFO(" -->> Time since last msg: " + std::to_string(jitter));
+			CLIENT_LOG_INFO(" -->> Time since last msg: " + std::to_string(jitter.count()));
 
 		} else {
 			CLIENT_LOG_ERROR("The connection to the server has been lost.");
@@ -163,8 +165,6 @@ int GameClient::startClient() {
 		CLIENT_LOG_ERROR("Invalid client ID provided. Aborting...");
 		return INVALID_CLIENT_ID;
 	}
-
-	timeSinceLastUpdate = time(0);
 
 	threadsRunning = true;
 
